@@ -56,7 +56,7 @@
     <option value="other" {% if request.GET.gender == 'other' %}selected{% endif %}>Other</option>
   </select>
   <select class="form-input" name="category">
-    <option value="">All categories</option>
+    <option value="">All family heads</option>
     {% for c in categories %}
     <option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>
     {% endfor %}

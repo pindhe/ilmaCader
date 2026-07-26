@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Categories — ilmaCader{% endblock %}
+{% block title %}Family Heads — ilmaCader{% endblock %}
 {% block content %}
 <div
   x-data="{ openCreate: {{ open_create_modal|yesno:'true,false' }}, editId: null }"
@@ -7,25 +7,27 @@
 >
   <div class="mb-6 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
     <div>
-      <p class="text-sm text-brand font-semibold tracking-wide uppercase">Category</p>
-      <h1 class="text-2xl md:text-3xl font-bold mt-1">Categories</h1>
-      <p class="text-sm text-[var(--muted)] mt-1">Organize families, documents, and general records</p>
+      <p class="text-sm text-brand font-semibold tracking-wide uppercase">Family structure</p>
+      <h1 class="text-2xl md:text-3xl font-bold mt-1">Family Heads</h1>
+      <p class="text-sm text-[var(--muted)] mt-1">
+        Create one family head per brother or household lead. When you create a user, assign them under their head.
+      </p>
     </div>
-    <button type="button" class="btn btn-primary" @click="openCreate = true">+ Add Category</button>
+    <button type="button" class="btn btn-primary" @click="openCreate = true">+ Add Family Head</button>
   </div>
 
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-    <div class="glass stat-card"><div class="stat-value text-2xl">{{ total_categories }}</div><div class="stat-label">Total</div></div>
-    <div class="glass stat-card"><div class="stat-value text-2xl">{{ family_count }}</div><div class="stat-label">Family</div></div>
-    <div class="glass stat-card"><div class="stat-value text-2xl">{{ document_count }}</div><div class="stat-label">Document</div></div>
+    <div class="glass stat-card"><div class="stat-value text-2xl">{{ total_categories }}</div><div class="stat-label">Total Heads</div></div>
+    <div class="glass stat-card"><div class="stat-value text-2xl">{{ family_count }}</div><div class="stat-label">Family Heads</div></div>
+    <div class="glass stat-card"><div class="stat-value text-2xl">{{ document_count }}</div><div class="stat-label">Document Groups</div></div>
     <div class="glass stat-card"><div class="stat-value text-2xl">{{ active_count }}</div><div class="stat-label">Active</div></div>
   </div>
 
   <form method="get" class="glass p-3 mb-4 grid grid-cols-1 md:grid-cols-4 gap-2">
-    <input class="form-input md:col-span-2" type="search" name="q" value="{{ request.GET.q }}" placeholder="Search categories...">
+    <input class="form-input md:col-span-2" type="search" name="q" value="{{ request.GET.q }}" placeholder="Search family heads...">
     <select class="form-input" name="kind">
-      <option value="">All kinds</option>
-      <option value="family" {% if request.GET.kind == 'family' %}selected{% endif %}>Family</option>
+      <option value="">All types</option>
+      <option value="family" {% if request.GET.kind == 'family' %}selected{% endif %}>Family Head</option>
       <option value="document" {% if request.GET.kind == 'document' %}selected{% endif %}>Document</option>
       <option value="general" {% if request.GET.kind == 'general' %}selected{% endif %}>General</option>
     </select>
@@ -43,9 +45,10 @@
     <table class="data">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Kind</th>
-          <th>Description</th>
+          <th>Family Head</th>
+          <th>Type</th>
+          <th>Members</th>
+          <th>Notes</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -55,6 +58,7 @@
         <tr>
           <td class="font-semibold">{{ c.name }}</td>
           <td><span class="badge badge-draft">{{ c.get_kind_display }}</span></td>
+          <td>{{ c.member_count }}</td>
           <td class="text-sm text-[var(--muted)] max-w-xs truncate">{{ c.description|default:"—" }}</td>
           <td>
             {% if c.is_active %}<span class="badge badge-approved">Active</span>
@@ -66,7 +70,7 @@
               <form method="post" action="{% url 'core:category_toggle' c.pk %}">{% csrf_token %}
                 <button class="btn btn-ghost text-xs py-1" type="submit">{% if c.is_active %}Deactivate{% else %}Activate{% endif %}</button>
               </form>
-              <form method="post" action="{% url 'core:category_delete' c.pk %}" onsubmit="return confirm('Delete category {{ c.name }}?');">{% csrf_token %}
+              <form method="post" action="{% url 'core:category_delete' c.pk %}" onsubmit="return confirm('Delete family head {{ c.name }}?');">{% csrf_token %}
                 <button class="btn btn-danger text-xs py-1" type="submit">Delete</button>
               </form>
             </div>
@@ -75,19 +79,19 @@
               <form method="post" action="{% url 'core:category_edit' c.pk %}" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {% csrf_token %}
                 <div>
-                  <label class="text-xs text-[var(--muted)]">Name</label>
+                  <label class="text-xs text-[var(--muted)]">Family head name</label>
                   <input class="form-input" name="name" value="{{ c.name }}" required>
                 </div>
                 <div>
-                  <label class="text-xs text-[var(--muted)]">Kind</label>
+                  <label class="text-xs text-[var(--muted)]">Type</label>
                   <select class="form-input" name="kind">
-                    <option value="family" {% if c.kind == 'family' %}selected{% endif %}>Family</option>
+                    <option value="family" {% if c.kind == 'family' %}selected{% endif %}>Family Head</option>
                     <option value="document" {% if c.kind == 'document' %}selected{% endif %}>Document</option>
                     <option value="general" {% if c.kind == 'general' %}selected{% endif %}>General</option>
                   </select>
                 </div>
                 <div class="sm:col-span-2">
-                  <label class="text-xs text-[var(--muted)]">Description</label>
+                  <label class="text-xs text-[var(--muted)]">Notes</label>
                   <textarea class="form-input" name="description" rows="2">{{ c.description }}</textarea>
                 </div>
                 <div class="sm:col-span-2 flex items-center gap-2">
@@ -102,7 +106,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center text-[var(--muted)] py-8">No categories yet. Add your first one.</td></tr>
+        <tr><td colspan="6" class="text-center text-[var(--muted)] py-8">No family heads yet. Add each brother’s name as a family head.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -117,8 +121,8 @@
          x-transition:enter-end="opacity-100 translate-y-0 scale-100">
       <div class="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h2 class="text-xl font-bold text-brand">Add Category</h2>
-          <p class="text-sm text-[var(--muted)] mt-1">Create a category for family or document records.</p>
+          <h2 class="text-xl font-bold text-brand">Add Family Head</h2>
+          <p class="text-sm text-[var(--muted)] mt-1">Example: if there are 3 brothers, create 3 heads — one with each name.</p>
         </div>
         <button type="button" class="btn btn-ghost text-sm px-3" @click="openCreate = false">Close</button>
       </div>
@@ -128,6 +132,7 @@
         {% for field in create_form %}
           <div>
             <label class="text-sm font-medium text-[var(--muted)]">{{ field.label }}</label>
+            {% if field.help_text %}<p class="text-xs text-[var(--muted)] mt-0.5 mb-1">{{ field.help_text }}</p>{% endif %}
             {% if field.name == 'is_active' %}
               <label class="flex items-center gap-2 mt-2 text-sm">{{ field }} Active</label>
             {% else %}
@@ -137,7 +142,7 @@
           </div>
         {% endfor %}
         <div class="flex gap-2 pt-2">
-          <button class="btn btn-primary flex-1" type="submit">Create Category</button>
+          <button class="btn btn-primary flex-1" type="submit">Create Family Head</button>
           <button class="btn btn-ghost" type="button" @click="openCreate = false">Cancel</button>
         </div>
       </form>

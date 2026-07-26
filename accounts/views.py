@@ -39,6 +39,8 @@ class CustomLoginView(LoginView):
             self.request.session.set_expiry(60 * 60 * 24 * 14)
         response = super().form_valid(form)
         log_action(self.request, AuditLog.Action.LOGIN, f"User {self.request.user.username} logged in")
+        if not self.request.user.is_administrator:
+            self.request.session["show_welcome"] = True
         return response
 
     def get_success_url(self):
@@ -130,7 +132,9 @@ class UserListView(AdministratorRequiredMixin, ListView):
         ctx["user_count"] = all_users.filter(role=CustomUser.Role.USER).count()
         ctx["active_count"] = all_users.filter(is_active_account=True).count()
         ctx["inactive_count"] = all_users.filter(is_active_account=False).count()
-        ctx["categories"] = Category.objects.filter(is_active=True).order_by("name")
+        ctx["categories"] = Category.objects.filter(
+            is_active=True, kind=Category.Kind.FAMILY
+        ).order_by("name")
         return ctx
 
     def post(self, request, *args, **kwargs):

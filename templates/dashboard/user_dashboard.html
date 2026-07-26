@@ -1,6 +1,33 @@
 {% extends "base.html" %}
 {% block title %}My Dashboard — ilmaCader{% endblock %}
 {% block content %}
+{% if show_welcome %}
+<div id="welcome-overlay"
+     class="welcome-overlay"
+     x-data="welcomeSplash()"
+     x-init="start()"
+     @keydown.escape.window="dismiss()"
+     role="dialog"
+     aria-modal="true"
+     aria-label="Welcome">
+  <div class="welcome-screen">
+    <p class="welcome-screen__eyebrow">ilmaCader Family Data Center</p>
+    <h2 class="welcome-screen__title">
+      Welcome, <span>{{ welcome_name }}</span>
+    </h2>
+    {% if welcome_category %}
+      <p class="welcome-screen__head-name">{{ welcome_category }}</p>
+    {% endif %}
+    <button type="button"
+            class="btn btn-primary welcome-screen__btn"
+            @click.prevent="dismiss()"
+            onclick="window.dismissWelcome && window.dismissWelcome()">
+      Continue to Dashboard
+    </button>
+  </div>
+</div>
+{% endif %}
+
 <section class="user-dash-hero glass mb-6">
   <div class="user-dash-hero__main">
     <div class="user-dash-hero__photo">
@@ -16,7 +43,9 @@
         {{ profile.full_name|default:user.get_full_name|default:user.username }}
       </h1>
       <p class="text-[var(--muted)] text-sm mt-1">
-        {% if profile.city or profile.region %}
+        {% if user_category %}
+          Family head: <span class="font-semibold text-brand">{{ user_category.name }}</span>
+        {% elif profile.city or profile.region %}
           {{ profile.city }}{% if profile.city and profile.region %}, {% endif %}{{ profile.region }}
         {% else %}
           Your family profile at a glance
@@ -24,6 +53,9 @@
       </p>
       <div class="flex flex-wrap items-center gap-2 mt-3">
         <span class="badge badge-{{ profile.status }}">{{ profile.get_status_display }}</span>
+        {% if user_category %}
+          <span class="badge badge-draft">{{ user_category.name }}</span>
+        {% endif %}
         {% if profile.updated_at %}
           <span class="text-xs text-[var(--muted)]">Updated {{ profile.updated_at|timesince }} ago</span>
         {% endif %}
@@ -188,6 +220,44 @@
 
 {% block extra_js %}
 <script>
+  function welcomeSplash() {
+    return {
+      timer: null,
+      start() {
+        document.documentElement.classList.add('welcome-open');
+        document.body.style.overflow = 'hidden';
+        window.dismissWelcome = () => this.dismiss();
+        this.timer = setTimeout(() => this.dismiss(), 5500);
+      },
+      dismiss() {
+        if (this.timer) {
+          clearTimeout(this.timer);
+          this.timer = null;
+        }
+        const el = document.getElementById('welcome-overlay');
+        if (el) {
+          el.classList.add('is-hidden');
+          el.setAttribute('aria-hidden', 'true');
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('visibility', 'hidden', 'important');
+          el.style.setProperty('pointer-events', 'none', 'important');
+        }
+        document.documentElement.classList.remove('welcome-open');
+        document.body.style.overflow = '';
+      },
+    };
+  }
+
+  window.dismissWelcome = function () {
+    const el = document.getElementById('welcome-overlay');
+    if (el) {
+      el.classList.add('is-hidden');
+      el.style.setProperty('display', 'none', 'important');
+    }
+    document.documentElement.classList.remove('welcome-open');
+    document.body.style.overflow = '';
+  };
+
   const docLabels = [{% for d in doc_type_stats %}"{{ d.label|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
   const docData = [{% for d in doc_type_stats %}{{ d.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
   const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#1d4ed8';

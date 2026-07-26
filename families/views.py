@@ -77,7 +77,9 @@ class FamilyListView(AdministratorRequiredMixin, ListView):
         ctx["approved_count"] = all_profiles.filter(status=FamilyProfile.Status.APPROVED).count()
         ctx["rejected_count"] = all_profiles.filter(status=FamilyProfile.Status.REJECTED).count()
         ctx["completed_count"] = all_profiles.filter(completion_percent__gte=80).count()
-        ctx["categories"] = Category.objects.filter(is_active=True).order_by("name")
+        ctx["categories"] = Category.objects.filter(
+            is_active=True, kind=Category.Kind.FAMILY
+        ).order_by("name")
         ctx["regions"] = (
             FamilyProfile.objects.exclude(region="")
             .values_list("region", flat=True)

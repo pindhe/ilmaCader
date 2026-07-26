@@ -15,6 +15,8 @@ class CustomUser(AbstractUser):
         null=True,
         blank=True,
         related_name="users",
+        verbose_name="Family Head",
+        help_text="Select the family head this member belongs to.",
     )
     is_active_account = models.BooleanField(default=True, help_text="Soft active flag managed by admin.")
     must_change_password = models.BooleanField(default=False)

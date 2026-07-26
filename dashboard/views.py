@@ -43,7 +43,12 @@ class UserDashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        user = self.request.user
+        user = (
+            CustomUser.objects.select_related("category", "created_by")
+            .filter(pk=self.request.user.pk)
+            .first()
+            or self.request.user
+        )
         profile = getattr(user, "family_profile", None)
         if profile is None:
             profile, _ = FamilyProfile.objects.get_or_create(user=user)
@@ -79,6 +84,13 @@ class UserDashboardView(LoginRequiredMixin, TemplateView):
 
         unread = user.notifications.filter(is_read=False).count()
 
+        show_welcome = bool(self.request.session.pop("show_welcome", False))
+        welcome_name = user.get_full_name() or user.username
+        welcome_category = user.category.name if getattr(user, "category", None) else None
+        welcome_admin = None
+        if getattr(user, "created_by", None):
+            welcome_admin = user.created_by.get_full_name() or user.created_by.username
+
         ctx.update(
             {
                 "profile": profile,
@@ -94,6 +106,11 @@ class UserDashboardView(LoginRequiredMixin, TemplateView):
                 "children": children,
                 "children_count": children_count,
                 "family_member_count": family_member_count,
+                "show_welcome": show_welcome,
+                "welcome_name": welcome_name,
+                "welcome_category": welcome_category,
+                "welcome_admin": welcome_admin,
+                "user_category": user.category,
             }
         )
         return ctx

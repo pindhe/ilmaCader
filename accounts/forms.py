@@ -35,6 +35,9 @@ class UserCreateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ("username", "first_name", "last_name", "email", "phone", "role", "category")
+        labels = {
+            "category": "Family Head",
+        }
         widgets = {
             "username": forms.TextInput(attrs={"class": "form-input"}),
             "first_name": forms.TextInput(attrs={"class": "form-input"}),
@@ -47,9 +50,14 @@ class UserCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("name")
-        self.fields["category"].required = True
-        self.fields["category"].empty_label = "Select category"
+        self.fields["category"].queryset = Category.objects.filter(
+            is_active=True, kind=Category.Kind.FAMILY
+        ).order_by("name")
+        self.fields["category"].required = False
+        self.fields["category"].empty_label = "Select family head"
+        self.fields["category"].help_text = (
+            "Required for users: choose which family head this member belongs to."
+        )
 
     def clean(self):
         cleaned = super().clean()
@@ -57,6 +65,10 @@ class UserCreateForm(forms.ModelForm):
         p2 = cleaned.get("password2")
         if p1 and p2 and p1 != p2:
             raise forms.ValidationError("Passwords do not match.")
+        role = cleaned.get("role")
+        category = cleaned.get("category")
+        if role == CustomUser.Role.USER and not category:
+            self.add_error("category", "Select the family head for this member.")
         return cleaned
 
     def save(self, commit=True):
@@ -71,6 +83,9 @@ class UserEditForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ("username", "first_name", "last_name", "email", "phone", "role", "category", "is_active_account")
+        labels = {
+            "category": "Family Head",
+        }
         widgets = {
             "username": forms.TextInput(attrs={"class": "form-input"}),
             "first_name": forms.TextInput(attrs={"class": "form-input"}),
@@ -83,9 +98,22 @@ class UserEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("name")
-        self.fields["category"].required = True
-        self.fields["category"].empty_label = "Select category"
+        self.fields["category"].queryset = Category.objects.filter(
+            is_active=True, kind=Category.Kind.FAMILY
+        ).order_by("name")
+        self.fields["category"].required = False
+        self.fields["category"].empty_label = "Select family head"
+        self.fields["category"].help_text = (
+            "Choose which family head this member belongs to."
+        )
+
+    def clean(self):
+        cleaned = super().clean()
+        role = cleaned.get("role")
+        category = cleaned.get("category")
+        if role == CustomUser.Role.USER and not category:
+            self.add_error("category", "Select the family head for this member.")
+        return cleaned
 
 
 class AdminSetPasswordForm(SetPasswordForm):

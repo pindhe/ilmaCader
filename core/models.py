@@ -58,20 +58,25 @@ class AuditLog(models.Model):
 
 class Category(models.Model):
     class Kind(models.TextChoices):
-        FAMILY = "family", "Family"
+        FAMILY = "family", "Family Head"
         DOCUMENT = "document", "Document"
         GENERAL = "general", "General"
 
-    name = models.CharField(max_length=120, unique=True)
-    kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.GENERAL)
-    description = models.TextField(blank=True)
+    name = models.CharField(
+        max_length=120,
+        unique=True,
+        help_text="Family head name (e.g. each brother's name as head of their family).",
+    )
+    kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.FAMILY)
+    description = models.TextField(blank=True, help_text="Optional notes about this family group.")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["name"]
-        verbose_name_plural = "Categories"
+        verbose_name = "Family Head"
+        verbose_name_plural = "Family Heads"
 
     def __str__(self):
         return self.name

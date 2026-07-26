@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import ListView, View
 
@@ -16,7 +17,7 @@ class CategoryListView(AdministratorRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        qs = Category.objects.all()
+        qs = Category.objects.annotate(member_count=Count("users")).all()
         q = self.request.GET.get("q", "").strip()
         kind = self.request.GET.get("kind", "").strip()
         status = self.request.GET.get("status", "").strip()
@@ -56,11 +57,11 @@ class CategoryListView(AdministratorRequiredMixin, ListView):
                 log_action(
                     request,
                     AuditLog.Action.CREATE,
-                    f"Created category {obj.name}",
+                    f"Created family head {obj.name}",
                     "Category",
                     obj.pk,
                 )
-                messages.success(request, f"Category “{obj.name}” created.")
+                messages.success(request, f"Family head “{obj.name}” created.")
                 return redirect("core:category_list")
             self.object_list = self.get_queryset()
             return self.render_to_response(
@@ -85,13 +86,13 @@ class CategoryUpdateView(AdministratorRequiredMixin, View):
             log_action(
                 request,
                 AuditLog.Action.UPDATE,
-                f"Updated category {category.name}",
+                f"Updated family head {category.name}",
                 "Category",
                 pk,
             )
-            messages.success(request, "Category updated.")
+            messages.success(request, "Family head updated.")
         else:
-            messages.error(request, "Could not update category. Check the fields.")
+            messages.error(request, "Could not update family head. Check the fields.")
         return redirect("core:category_list")
 
 
@@ -101,8 +102,8 @@ class CategoryToggleView(AdministratorRequiredMixin, View):
         category.is_active = not category.is_active
         category.save(update_fields=["is_active", "updated_at"])
         state = "activated" if category.is_active else "deactivated"
-        log_action(request, AuditLog.Action.UPDATE, f"Category {category.name} {state}", "Category", pk)
-        messages.success(request, f"Category {state}.")
+        log_action(request, AuditLog.Action.UPDATE, f"Family head {category.name} {state}", "Category", pk)
+        messages.success(request, f"Family head {state}.")
         return redirect("core:category_list")
 
 
@@ -111,6 +112,6 @@ class CategoryDeleteView(AdministratorRequiredMixin, View):
         category = get_object_or_404(Category, pk=pk)
         name = category.name
         category.delete()
-        log_action(request, AuditLog.Action.DELETE, f"Deleted category {name}", "Category", pk)
-        messages.success(request, f"Category “{name}” deleted.")
+        log_action(request, AuditLog.Action.DELETE, f"Deleted family head {name}", "Category", pk)
+        messages.success(request, f"Family head “{name}” deleted.")
         return redirect("core:category_list")
