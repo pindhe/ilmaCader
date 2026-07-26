@@ -112,6 +112,7 @@ class FamilyEditView(LoginRequiredMixin, View):
             raise PermissionDenied
         context = self._forms(profile)
         context["profile"] = profile
+        context.update(self._gate_flags(profile))
         return render(request, self.template_name, context)
 
     def post(self, request, pk=None):
@@ -196,20 +197,43 @@ class FamilyEditView(LoginRequiredMixin, View):
             return redirect("families:mine")
 
         messages.error(request, "Please correct the errors below.")
-        return render(
-            request,
-            self.template_name,
-            {
-                "profile": profile,
-                "profile_form": profile_form,
-                "parent_form": parent_form,
-                "spouse_form": spouse_form,
-                "health_form": health_form,
-                "employment_form": employment_form,
-                "property_form": property_form,
-                "child_formset": child_formset,
-            },
-        )
+        ctx = {
+            "profile": profile,
+            "profile_form": profile_form,
+            "parent_form": parent_form,
+            "spouse_form": spouse_form,
+            "health_form": health_form,
+            "employment_form": employment_form,
+            "property_form": property_form,
+            "child_formset": child_formset,
+        }
+        ctx.update(self._gate_flags(profile, spouse_form=spouse_form, child_formset=child_formset))
+        return render(request, self.template_name, ctx)
+
+    def _gate_flags(self, profile, spouse_form=None, child_formset=None):
+        from django.core.exceptions import ObjectDoesNotExist
+
+        has_spouse = False
+        if spouse_form is not None and spouse_form.errors:
+            has_spouse = True
+        else:
+            try:
+                spouse = profile.spouse
+                if spouse and spouse.name:
+                    has_spouse = True
+            except ObjectDoesNotExist:
+                pass
+
+        has_children = False
+        if child_formset is not None and (child_formset.errors or child_formset.non_form_errors()):
+            has_children = True
+        elif profile.children.exists():
+            has_children = True
+
+        return {
+            "has_spouse_initial": has_spouse,
+            "has_children_initial": has_children,
+        }
 
     def _forms(self, profile):
         from .models import Parent, Spouse, Health, Employment, Property

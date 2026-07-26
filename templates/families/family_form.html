@@ -1,116 +1,336 @@
 {% extends "base.html" %}
-{% block title %}Family Information Form{% endblock %}
+{% block title %}Edit Family Information — ilmaCader{% endblock %}
 {% block content %}
-<div class="mb-5">
-  <h1 class="text-2xl font-bold">Family Information</h1>
-  <p class="text-sm text-[var(--muted)]">Complete all sections. Your progress is saved when you submit the form.</p>
-</div>
-
-<form method="post" enctype="multipart/form-data" class="space-y-4" x-data="{ tab: 'personal' }">
-  {% csrf_token %}
-  <div class="glass p-2 flex flex-wrap gap-1 no-print sticky top-[4.2rem] z-20">
-    <template x-for="t in [
-      ['personal','Personal'],['parents','Parents'],['spouse','Spouse'],
-      ['children','Children'],['health','Health'],['employment','Employment'],['property','Property']
-    ]">
-      <button type="button" class="btn text-sm py-2"
-              :class="tab === t[0] ? 'btn-primary' : 'btn-ghost'"
-              @click="tab = t[0]" x-text="t[1]"></button>
-    </template>
-  </div>
-
-  <section class="glass p-5 space-y-3" x-show="tab==='personal'" x-cloak>
-    <h2 class="font-semibold text-brand">Personal Information</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {% for field in profile_form %}
-        <div class="{% if field.name == 'address' %}md:col-span-2{% endif %}">
-          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}<div class="text-red-500 text-xs">{{ field.errors|striptags }}</div>{% endif %}
-        </div>
-      {% endfor %}
+<div class="wizard-page">
+  <header class="wizard-header glass">
+    <div class="wizard-header__text">
+      <p class="wizard-eyebrow">Family profile</p>
+      <h1 class="wizard-title">Edit My Information</h1>
+      <p class="wizard-subtitle">Complete all 7 steps carefully. Save on the final step to update your record.</p>
     </div>
-  </section>
+    <div class="wizard-header__meta">
+      {% if profile %}
+        <span class="badge badge-{{ profile.status }}">{{ profile.get_status_display }}</span>
+        <div class="wizard-completion">
+          <span>{{ profile.completion_percent }}% complete</span>
+          <div class="progress"><span style="width: {{ profile.completion_percent }}%"></span></div>
+        </div>
+      {% endif %}
+    </div>
+  </header>
 
-  <section class="glass p-5 space-y-3" x-show="tab==='parents'" x-cloak>
-    <h2 class="font-semibold text-brand">Parents</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {% for field in parent_form %}
+  <form method="post" enctype="multipart/form-data" class="wizard-form"
+        x-data="familyWizard({
+          start: {% if profile_form.errors %}0{% elif parent_form.errors %}1{% elif spouse_form.errors %}2{% elif child_formset.errors %}3{% elif health_form.errors %}4{% elif employment_form.errors %}5{% elif property_form.errors %}6{% else %}0{% endif %},
+          hasSpouse: {% if has_spouse_initial %}true{% else %}null{% endif %},
+          hasChildren: {% if has_children_initial %}true{% else %}null{% endif %}
+        })">
+    {% csrf_token %}
+
+    <div class="wizard-progress glass">
+      <div class="wizard-progress__top">
+        <div class="wizard-progress__label">
+          Step <strong x-text="step + 1"></strong> of <span x-text="steps.length"></span>
+          — <span x-text="steps[step].label"></span>
+        </div>
+        <div class="wizard-progress__pct" x-text="Math.round(((step + 1) / steps.length) * 100) + '%'"></div>
+      </div>
+      <div class="progress wizard-progress__bar"><span :style="'width:' + (((step + 1) / steps.length) * 100) + '%'"></span></div>
+      <ol class="wizard-steps">
+        <template x-for="(s, i) in steps" :key="s.key">
+          <li>
+            <button type="button" class="wizard-step"
+                    :class="{ 'is-active': step === i, 'is-done': step > i }"
+                    @click="go(i)">
+              <span class="wizard-step__num" x-text="step > i ? '✓' : (i + 1)"></span>
+              <span class="wizard-step__label" x-text="s.label"></span>
+            </button>
+          </li>
+        </template>
+      </ol>
+    </div>
+
+    {# —— 1. Personal —— #}
+    <section class="wizard-panel glass" x-show="step === 0" x-cloak>
+      <div class="wizard-panel__head">
         <div>
-          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
-          {{ field }}
+          <h2 class="wizard-panel__title">1. Personal Information</h2>
+          <p class="wizard-panel__desc">Identity, contact, and residential details.</p>
         </div>
-      {% endfor %}
-    </div>
-  </section>
+      </div>
 
-  <section class="glass p-5 space-y-3" x-show="tab==='spouse'" x-cloak>
-    <h2 class="font-semibold text-brand">Spouse</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {% for field in spouse_form %}
+      <div class="form-section">
+        <h3 class="form-section__title">Identity</h3>
+        <div class="form-grid">
+          {% include "families/includes/field.html" with field=profile_form.first_name %}
+          {% include "families/includes/field.html" with field=profile_form.middle_name %}
+          {% include "families/includes/field.html" with field=profile_form.last_name %}
+          {% include "families/includes/field.html" with field=profile_form.gender %}
+          {% include "families/includes/field.html" with field=profile_form.date_of_birth %}
+          {% include "families/includes/field.html" with field=profile_form.photo %}
+          {% include "families/includes/field.html" with field=profile_form.national_id %}
+          {% include "families/includes/field.html" with field=profile_form.birth_certificate_number %}
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section__title">Contact & background</h3>
+        <div class="form-grid">
+          {% include "families/includes/field.html" with field=profile_form.phone %}
+          {% include "families/includes/field.html" with field=profile_form.email %}
+          {% include "families/includes/field.html" with field=profile_form.occupation %}
+          {% include "families/includes/field.html" with field=profile_form.education %}
+          {% include "families/includes/field.html" with field=profile_form.blood_group %}
+          {% include "families/includes/field.html" with field=profile_form.nationality %}
+          {% include "families/includes/field.html" with field=profile_form.religion %}
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section__title">Location</h3>
+        <div class="form-grid">
+          {% include "families/includes/field.html" with field=profile_form.region %}
+          {% include "families/includes/field.html" with field=profile_form.district %}
+          {% include "families/includes/field.html" with field=profile_form.city %}
+          {% include "families/includes/field.html" with field=profile_form.address span="full" %}
+        </div>
+      </div>
+    </section>
+
+    {# —— 2. Parents —— #}
+    <section class="wizard-panel glass" x-show="step === 1" x-cloak>
+      <div class="wizard-panel__head">
         <div>
-          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
-          {{ field }}
+          <h2 class="wizard-panel__title">2. Parents</h2>
+          <p class="wizard-panel__desc">Father and mother information.</p>
         </div>
-      {% endfor %}
-    </div>
-  </section>
+      </div>
+      <div class="form-split">
+        <div class="form-card">
+          <h3 class="form-card__title">Father</h3>
+          <div class="form-grid form-grid--single">
+            {% include "families/includes/field.html" with field=parent_form.father_name %}
+            {% include "families/includes/field.html" with field=parent_form.father_occupation %}
+            {% include "families/includes/field.html" with field=parent_form.father_phone %}
+            {% include "families/includes/field.html" with field=parent_form.father_alive %}
+          </div>
+        </div>
+        <div class="form-card">
+          <h3 class="form-card__title">Mother</h3>
+          <div class="form-grid form-grid--single">
+            {% include "families/includes/field.html" with field=parent_form.mother_name %}
+            {% include "families/includes/field.html" with field=parent_form.mother_occupation %}
+            {% include "families/includes/field.html" with field=parent_form.mother_phone %}
+            {% include "families/includes/field.html" with field=parent_form.mother_alive %}
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <section class="glass p-5 space-y-3" x-show="tab==='children'" x-cloak>
-    <h2 class="font-semibold text-brand">Children</h2>
-    {{ child_formset.management_form }}
-    {% for form in child_formset %}
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-2 border-b border-[var(--border)] pb-3 mb-3">
-        {% for field in form.visible_fields %}
-          <div>
-            {% if forloop.parentloop.first %}<label class="text-xs text-[var(--muted)]">{{ field.label }}</label>{% endif %}
-            {{ field }}
+    {# —— 3. Spouse —— #}
+    <section class="wizard-panel glass" x-show="step === 2" x-cloak>
+      <div class="wizard-panel__head">
+        <div>
+          <h2 class="wizard-panel__title">3. Spouse</h2>
+          <p class="wizard-panel__desc">Tell us if you are married, then fill spouse details.</p>
+        </div>
+      </div>
+
+      <div class="wizard-gate" x-show="hasSpouse === null" x-cloak>
+        <p class="wizard-gate__question">Do you have a spouse?</p>
+        <p class="wizard-gate__hint">Choose Yes to enter spouse information, or No to continue.</p>
+        <div class="wizard-gate__actions">
+          <button type="button" class="btn btn-primary" @click="answerSpouse(true)">Yes, I have a spouse</button>
+          <button type="button" class="btn btn-ghost" @click="answerSpouse(false)">No</button>
+        </div>
+      </div>
+
+      <div x-show="hasSpouse === true" x-cloak>
+        <div class="form-toolbar">
+          <p class="text-sm text-[var(--muted)]">Enter spouse details below.</p>
+          <button type="button" class="btn btn-ghost text-sm py-1" @click="hasSpouse = null">Change answer</button>
+        </div>
+        <div class="form-grid">
+          {% include "families/includes/field.html" with field=spouse_form.name %}
+          {% include "families/includes/field.html" with field=spouse_form.marriage_date %}
+          {% include "families/includes/field.html" with field=spouse_form.occupation %}
+          {% include "families/includes/field.html" with field=spouse_form.phone %}
+        </div>
+      </div>
+
+      <div class="wizard-skip" x-show="hasSpouse === false" x-cloak>
+        <p>No spouse will be recorded on this profile.</p>
+        <button type="button" class="btn btn-ghost text-sm" @click="hasSpouse = null">Change answer</button>
+      </div>
+    </section>
+
+    {# —— 4. Children —— #}
+    <section class="wizard-panel glass" x-show="step === 3" x-cloak>
+      <div class="wizard-panel__head">
+        <div>
+          <h2 class="wizard-panel__title">4. Children</h2>
+          <p class="wizard-panel__desc">Add your children if you have any.</p>
+        </div>
+      </div>
+
+      <div class="wizard-gate" x-show="hasChildren === null" x-cloak>
+        <p class="wizard-gate__question">Do you have children?</p>
+        <p class="wizard-gate__hint">Choose Yes to add children, or No to continue to Health.</p>
+        <div class="wizard-gate__actions">
+          <button type="button" class="btn btn-primary" @click="answerChildren(true)">Yes, I have children</button>
+          <button type="button" class="btn btn-ghost" @click="answerChildren(false)">No</button>
+        </div>
+      </div>
+
+      <div x-show="hasChildren === true" x-cloak>
+        <div class="form-toolbar">
+          <p class="text-sm text-[var(--muted)]">Fill one card per child. Empty rows are ignored.</p>
+          <button type="button" class="btn btn-ghost text-sm py-1" @click="hasChildren = null">Change answer</button>
+        </div>
+      </div>
+
+      <div class="wizard-skip" x-show="hasChildren === false" x-cloak>
+        <p>No children will be recorded on this profile.</p>
+        <button type="button" class="btn btn-ghost text-sm" @click="hasChildren = null">Change answer</button>
+      </div>
+
+      <div :class="hasChildren === true ? 'child-list' : 'sr-only'">
+        {{ child_formset.management_form }}
+        {% for form in child_formset %}
+          <div class="form-card child-card">
+            <div class="child-card__head">
+              <span class="child-card__badge">Child {{ forloop.counter }}</span>
+              {% if form.DELETE %}
+                <label class="child-card__delete">{{ form.DELETE }} Remove</label>
+              {% endif %}
+            </div>
+            <div class="form-grid">
+              {% for field in form.visible_fields %}
+                {% if field.name != 'DELETE' %}
+                  {% include "families/includes/field.html" with field=field %}
+                {% endif %}
+              {% endfor %}
+            </div>
+            {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
           </div>
         {% endfor %}
-        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        {% if child_formset.non_form_errors %}
+          <div class="form-error">{{ child_formset.non_form_errors }}</div>
+        {% endif %}
       </div>
-    {% endfor %}
-  </section>
+    </section>
 
-  <section class="glass p-5 space-y-3" x-show="tab==='health'" x-cloak>
-    <h2 class="font-semibold text-brand">Health</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {% for field in health_form %}
-        <div class="{% if field.name == 'medical_conditions' or field.name == 'disabilities' %}md:col-span-2{% endif %}">
-          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
-          {{ field }}
-        </div>
-      {% endfor %}
-    </div>
-  </section>
-
-  <section class="glass p-5 space-y-3" x-show="tab==='employment'" x-cloak>
-    <h2 class="font-semibold text-brand">Employment</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {% for field in employment_form %}
+    {# —— 5. Health —— #}
+    <section class="wizard-panel glass" x-show="step === 4" x-cloak>
+      <div class="wizard-panel__head">
         <div>
-          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
-          {{ field }}
+          <h2 class="wizard-panel__title">5. Health</h2>
+          <p class="wizard-panel__desc">Medical background and insurance information.</p>
         </div>
-      {% endfor %}
-    </div>
-  </section>
+      </div>
+      <div class="form-grid">
+        {% include "families/includes/field.html" with field=health_form.blood_group %}
+        {% include "families/includes/field.html" with field=health_form.insurance %}
+        {% include "families/includes/field.html" with field=health_form.doctor %}
+        {% include "families/includes/field.html" with field=health_form.medical_conditions span="full" %}
+        {% include "families/includes/field.html" with field=health_form.disabilities span="full" %}
+      </div>
+    </section>
 
-  <section class="glass p-5 space-y-3" x-show="tab==='property'" x-cloak>
-    <h2 class="font-semibold text-brand">Property</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {% for field in property_form %}
+    {# —— 6. Employment —— #}
+    <section class="wizard-panel glass" x-show="step === 5" x-cloak>
+      <div class="wizard-panel__head">
         <div>
-          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
-          {{ field }}
+          <h2 class="wizard-panel__title">6. Employment</h2>
+          <p class="wizard-panel__desc">Current work and employment status.</p>
         </div>
-      {% endfor %}
-    </div>
-  </section>
+      </div>
+      <div class="form-grid">
+        {% include "families/includes/field.html" with field=employment_form.employment_status %}
+        {% include "families/includes/field.html" with field=employment_form.company %}
+        {% include "families/includes/field.html" with field=employment_form.position %}
+        {% include "families/includes/field.html" with field=employment_form.years_worked %}
+        {% include "families/includes/field.html" with field=employment_form.salary %}
+      </div>
+    </section>
 
-  <div class="flex gap-2">
-    <button class="btn btn-primary" type="submit">Save Family Information</button>
-    <a class="btn btn-ghost" href="{% if user.is_administrator %}{% url 'families:list' %}{% else %}{% url 'families:mine' %}{% endif %}">Cancel</a>
-  </div>
-</form>
+    {# —— 7. Property —— #}
+    <section class="wizard-panel glass" x-show="step === 6" x-cloak>
+      <div class="wizard-panel__head">
+        <div>
+          <h2 class="wizard-panel__title">7. Property</h2>
+          <p class="wizard-panel__desc">Assets such as house, land, vehicle, and business.</p>
+        </div>
+      </div>
+      <div class="form-grid">
+        {% include "families/includes/field.html" with field=property_form.house span="full" %}
+        {% include "families/includes/field.html" with field=property_form.land span="full" %}
+        {% include "families/includes/field.html" with field=property_form.vehicle %}
+        {% include "families/includes/field.html" with field=property_form.business %}
+      </div>
+      <div class="wizard-finish-note">
+        This is the last step. Click <strong>Save Family Information</strong> to store all changes.
+      </div>
+    </section>
+
+    <div class="wizard-nav glass">
+      <button type="button" class="btn btn-ghost" @click="prev()" :disabled="step === 0" :class="{ 'opacity-40 cursor-not-allowed': step === 0 }">
+        ← Back
+      </button>
+      <div class="wizard-nav__right">
+        <a class="btn btn-ghost" href="{% if user.is_administrator %}{% url 'families:list' %}{% else %}{% url 'families:mine' %}{% endif %}">Cancel</a>
+        <button type="button" class="btn btn-primary" x-show="step < steps.length - 1 && canGoNext()" @click="next()">
+          Next →
+        </button>
+        <button class="btn btn-primary" type="submit" x-show="step === steps.length - 1" x-cloak>
+          Save Family Information
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function familyWizard({ start = 0, hasSpouse = null, hasChildren = null } = {}) {
+    return {
+      step: start,
+      hasSpouse,
+      hasChildren,
+      steps: [
+        { key: 'personal', label: 'Personal' },
+        { key: 'parents', label: 'Parents' },
+        { key: 'spouse', label: 'Spouse' },
+        { key: 'children', label: 'Children' },
+        { key: 'health', label: 'Health' },
+        { key: 'employment', label: 'Employment' },
+        { key: 'property', label: 'Property' },
+      ],
+      go(i) {
+        if (i >= 0 && i < this.steps.length) this.step = i;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      canGoNext() {
+        if (this.step === 2) return this.hasSpouse === true || this.hasSpouse === false;
+        if (this.step === 3) return this.hasChildren === true || this.hasChildren === false;
+        return true;
+      },
+      answerSpouse(value) {
+        this.hasSpouse = value;
+        if (!value) this.next();
+      },
+      answerChildren(value) {
+        this.hasChildren = value;
+        if (!value) this.next();
+      },
+      next() {
+        if (this.step < this.steps.length - 1) this.go(this.step + 1);
+      },
+      prev() {
+        if (this.step > 0) this.go(this.step - 1);
+      },
+    };
+  }
+</script>
 {% endblock %}

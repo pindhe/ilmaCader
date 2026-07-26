@@ -1,8 +1,8 @@
 from datetime import date
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
-from django.db.models.functions import ExtractYear
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
@@ -11,6 +11,24 @@ from accounts.models import CustomUser
 from core.models import AuditLog
 from documents.models import Document
 from families.models import FamilyProfile
+
+
+COMPLETION_FIELD_LABELS = [
+    ("first_name", "First name"),
+    ("last_name", "Last name"),
+    ("gender", "Gender"),
+    ("date_of_birth", "Date of birth"),
+    ("national_id", "National ID"),
+    ("phone", "Phone"),
+    ("email", "Email"),
+    ("occupation", "Occupation"),
+    ("education", "Education"),
+    ("nationality", "Nationality"),
+    ("address", "Address"),
+    ("region", "Region"),
+    ("district", "District"),
+    ("city", "City"),
+]
 
 
 class HomeRedirectView(LoginRequiredMixin, TemplateView):
@@ -29,12 +47,53 @@ class UserDashboardView(LoginRequiredMixin, TemplateView):
         profile = getattr(user, "family_profile", None)
         if profile is None:
             profile, _ = FamilyProfile.objects.get_or_create(user=user)
+
         docs = Document.objects.filter(user=user)
+        doc_type_stats = list(
+            docs.values("doc_type").annotate(total=Count("id")).order_by("-total")
+        )
+        for item in doc_type_stats:
+            item["label"] = dict(Document.DocType.choices).get(item["doc_type"], item["doc_type"])
+
+        missing_fields = [
+            label for attr, label in COMPLETION_FIELD_LABELS if not getattr(profile, attr, None)
+        ]
+
+        try:
+            parents = profile.parents
+        except ObjectDoesNotExist:
+            parents = None
+        try:
+            spouse = profile.spouse
+        except ObjectDoesNotExist:
+            spouse = None
+
+        children = list(profile.children.all()[:5])
+        children_count = profile.children.count()
+
+        family_member_count = children_count
+        if parents:
+            family_member_count += sum(1 for n in (parents.father_name, parents.mother_name) if n)
+        if spouse and spouse.name:
+            family_member_count += 1
+
+        unread = user.notifications.filter(is_read=False).count()
+
         ctx.update(
             {
                 "profile": profile,
                 "doc_count": docs.count(),
+                "recent_docs": docs[:5],
+                "doc_type_stats": doc_type_stats,
                 "notifications": user.notifications.all()[:8],
+                "unread_count": unread,
+                "missing_fields": missing_fields[:8],
+                "missing_total": len(missing_fields),
+                "parents": parents,
+                "spouse": spouse,
+                "children": children,
+                "children_count": children_count,
+                "family_member_count": family_member_count,
             }
         )
         return ctx

@@ -1,0 +1,13 @@
+<div class="form-field{% if span == 'full' %} form-field--full{% endif %}{% if field.errors %} has-error{% endif %}">
+  <label class="form-field__label" for="{{ field.id_for_label }}">
+    {{ field.label }}
+    {% if field.field.required %}<span class="form-field__req">*</span>{% endif %}
+  </label>
+  {{ field }}
+  {% if field.help_text %}
+    <p class="form-field__help">{{ field.help_text }}</p>
+  {% endif %}
+  {% if field.errors %}
+    <p class="form-field__error">{{ field.errors|striptags }}</p>
+  {% endif %}
+</div>
