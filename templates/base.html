@@ -1,0 +1,130 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" x-data="{ dark: localStorage.getItem('theme') === 'dark', sidebarOpen: false }"
+      :class="{ 'dark': dark }"
+      x-init="$watch('dark', v => localStorage.setItem('theme', v ? 'dark' : 'light'))">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ site_settings.site_name|default:"ilmaCader" }}{% endblock %}</title>
+  <link rel="icon" href="{% if site_settings.logo %}{{ site_settings.logo.url }}{% else %}{{ MEDIA_URL }}logo.jpg{% endif %}" type="image/jpeg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#1d4ed8', dark: '#1e3a8a', soft: '#dbeafe' }
+          },
+          fontFamily: {
+            display: ['"Segoe UI"', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="font-display">
+  {% if user.is_authenticated %}
+  <div class="app-shell min-h-screen flex">
+    <!-- Sidebar (all navigation + former navbar actions) -->
+    <aside class="no-print app-sidebar fixed inset-y-0 left-0 z-40 w-72 glass border-r flex flex-col
+                   transform transition-transform duration-300 lg:translate-x-0 lg:static"
+           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+
+      <div class="p-5 border-b border-[var(--border)] shrink-0">
+        <a href="{% url 'dashboard:home' %}" class="block">
+          {% include "includes/brand_logo.html" with logo_class="brand-logo--sidebar" %}
+          <div class="text-xl font-bold text-brand tracking-tight">{{ site_settings.site_name|default:"ilmaCader" }}</div>
+          <div class="text-xs text-[var(--muted)] mt-0.5">{{ site_settings.tagline|default:"Family Data Center" }}</div>
+        </a>
+        <div class="mt-3 text-xs text-[var(--muted)]">
+          Signed in as
+          <span class="font-semibold text-[var(--text)]">{{ user.get_full_name|default:user.username }}</span>
+        </div>
+      </div>
+
+      <nav class="p-3 space-y-1 flex-1 overflow-y-auto">
+        <p class="sidebar-section">Main</p>
+        {% if user.is_administrator %}
+          <a class="sidebar-link {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'admin' %}active{% endif %}" href="{% url 'dashboard:admin' %}">Dashboard</a>
+          <a class="sidebar-link {% if 'user' in request.resolver_match.url_name|default:'' %}active{% endif %}" href="{% url 'accounts:user_list' %}">Users</a>
+          <a class="sidebar-link {% if request.resolver_match.app_name == 'families' %}active{% endif %}" href="{% url 'families:list' %}">Families</a>
+          <a class="sidebar-link {% if request.resolver_match.app_name == 'documents' %}active{% endif %}" href="{% url 'documents:list' %}">Documents</a>
+          <a class="sidebar-link {% if request.resolver_match.app_name == 'reports' %}active{% endif %}" href="{% url 'reports:home' %}">Reports</a>
+
+          <p class="sidebar-section">Account</p>
+          <a class="sidebar-link relative {% if request.resolver_match.app_name == 'notifications' %}active{% endif %}" href="{% url 'notifications:list' %}">
+            Alerts
+            {% if unread_notification_count %}
+            <span class="sidebar-badge">{{ unread_notification_count }}</span>
+            {% endif %}
+          </a>
+          <a class="sidebar-link {% if request.resolver_match.url_name == 'site_settings' %}active{% endif %}" href="{% url 'accounts:site_settings' %}">Settings</a>
+          <a class="sidebar-link {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}" href="{% url 'accounts:change_password' %}">Password</a>
+        {% else %}
+          <a class="sidebar-link {% if request.resolver_match.url_name == 'user' %}active{% endif %}" href="{% url 'dashboard:user' %}">Dashboard</a>
+          <a class="sidebar-link" href="{% url 'families:mine' %}">My Family</a>
+          <a class="sidebar-link" href="{% url 'families:edit' %}">Edit Profile</a>
+          <a class="sidebar-link" href="{% url 'documents:list' %}">Documents</a>
+          <a class="sidebar-link" href="{% url 'reports:home' %}">Reports</a>
+          <a class="sidebar-link" href="{% url 'families:search_own' %}">Search</a>
+
+          <p class="sidebar-section">Account</p>
+          <a class="sidebar-link relative" href="{% url 'notifications:list' %}">
+            Alerts
+            {% if unread_notification_count %}
+            <span class="sidebar-badge">{{ unread_notification_count }}</span>
+            {% endif %}
+          </a>
+          <a class="sidebar-link" href="{% url 'accounts:change_password' %}">Password</a>
+        {% endif %}
+
+        <p class="sidebar-section">Preferences</p>
+        <button type="button" class="sidebar-link w-full text-left" @click="dark = !dark">
+          <span x-text="dark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"></span>
+        </button>
+      </nav>
+
+      <div class="p-3 border-t border-[var(--border)] shrink-0 space-y-2">
+        <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+          <button class="btn btn-primary w-full" type="submit">Logout</button>
+        </form>
+        <button type="button" class="btn btn-ghost w-full lg:hidden" @click="sidebarOpen = false">Close menu</button>
+      </div>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col relative">
+      <!-- Mobile-only open button (no top navbar) -->
+      <button type="button"
+              class="no-print lg:hidden fixed top-4 left-4 z-50 btn btn-primary shadow-lg"
+              @click="sidebarOpen = true"
+              x-show="!sidebarOpen"
+              x-cloak>
+        Menu
+      </button>
+
+      <main class="p-4 md:p-6 lg:p-8 fade-in flex-1">
+        {% if messages %}
+          <div class="mb-4 space-y-2">
+            {% for message in messages %}
+              <div class="glass px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-300{% elif message.tags == 'success' %}border-green-300{% endif %}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <div class="fixed inset-0 bg-black/40 z-30 lg:hidden" x-show="sidebarOpen" @click="sidebarOpen=false" x-cloak></div>
+  {% else %}
+    {% block public %}{% endblock %}
+  {% endif %}
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

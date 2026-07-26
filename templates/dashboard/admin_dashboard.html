@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — ilmaCader{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+  <div>
+    <p class="text-sm text-brand font-semibold tracking-wide uppercase">Administration</p>
+    <h1 class="text-2xl md:text-3xl font-bold mt-1">Dashboard</h1>
+    <p class="text-[var(--muted)] text-sm mt-1">Family records overview, approvals, and system activity</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">Create User</a>
+    <a href="{% url 'families:list' %}?status=pending" class="btn btn-ghost">Pending Profiles</a>
+    <a href="{% url 'reports:summary' %}" class="btn btn-ghost">Summary Report</a>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-4 mb-6">
+  <a href="{% url 'accounts:user_list' %}" class="glass stat-card block">
+    <div class="stat-value">{{ total_users }}</div>
+    <div class="stat-label">Total Users</div>
+    <div class="text-xs text-[var(--muted)] mt-2">{{ active_users }} active</div>
+  </a>
+  <a href="{% url 'families:list' %}" class="glass stat-card block">
+    <div class="stat-value">{{ total_families }}</div>
+    <div class="stat-label">Total Families</div>
+  </a>
+  <div class="glass stat-card">
+    <div class="stat-value">{{ completed_profiles }}</div>
+    <div class="stat-label">Completed Profiles</div>
+  </div>
+  <a href="{% url 'families:list' %}?status=pending" class="glass stat-card block">
+    <div class="stat-value">{{ pending_profiles }}</div>
+    <div class="stat-label">Pending Profiles</div>
+  </a>
+  <div class="glass stat-card">
+    <div class="stat-value">{{ approved_profiles }}</div>
+    <div class="stat-label">Approved Profiles</div>
+  </div>
+  <a href="{% url 'documents:list' %}" class="glass stat-card block">
+    <div class="stat-value">{{ uploaded_documents }}</div>
+    <div class="stat-label">Uploaded Documents</div>
+  </a>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+  <div class="glass p-5">
+    <h2 class="font-semibold mb-3">Gender Distribution</h2>
+    <canvas id="genderChart" height="200"></canvas>
+  </div>
+  <div class="glass p-5">
+    <h2 class="font-semibold mb-3">Age Distribution</h2>
+    <canvas id="ageChart" height="200"></canvas>
+  </div>
+  <div class="glass p-5">
+    <h2 class="font-semibold mb-3">Family Status</h2>
+    <canvas id="statusChart" height="200"></canvas>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+  <div class="glass p-5 xl:col-span-1">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold">Pending Approvals</h2>
+      <a href="{% url 'families:list' %}?status=pending" class="text-sm text-brand font-semibold">View all</a>
+    </div>
+    <ul class="space-y-3 text-sm">
+      {% for f in pending_families %}
+      <li class="flex items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
+        <div>
+          <div class="font-medium">{{ f.full_name|default:f.user.username }}</div>
+          <div class="text-[var(--muted)] text-xs">{{ f.user.username }} · {{ f.completion_percent }}%</div>
+        </div>
+        <a class="btn btn-ghost text-xs py-1" href="{% url 'families:detail' f.pk %}">Review</a>
+      </li>
+      {% empty %}
+      <li class="text-[var(--muted)]">No profiles waiting for approval.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="glass p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold">Latest Users</h2>
+      <a href="{% url 'accounts:user_list' %}" class="text-sm text-brand font-semibold">Manage</a>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>User</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody>
+          {% for u in latest_users %}
+          <tr>
+            <td>
+              <a class="text-brand font-medium" href="{% url 'accounts:user_edit' u.pk %}">{{ u.username }}</a>
+            </td>
+            <td>{{ u.get_role_display }}</td>
+            <td>{{ u.date_joined|date:"M d, Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-[var(--muted)]">No users yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass p-5">
+    <h2 class="font-semibold mb-3">Latest Activities</h2>
+    <ul class="space-y-2 text-sm max-h-[320px] overflow-y-auto pr-1">
+      {% for a in latest_activities %}
+      <li class="flex justify-between gap-3 border-b border-[var(--border)] pb-2">
+        <span>{{ a.message }}</span>
+        <span class="text-[var(--muted)] whitespace-nowrap text-xs">{{ a.created_at|timesince }} ago</span>
+      </li>
+      {% empty %}
+      <li class="text-[var(--muted)]">No activity yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const genderLabels = [{% for g in gender_stats %}"{{ g.gender|default:'n/a'|title }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+  const genderData = [{% for g in gender_stats %}{{ g.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
+  const ageLabels = [{% for k,v in age_buckets.items %}"{{ k }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+  const ageData = [{% for k,v in age_buckets.items %}{{ v }}{% if not forloop.last %},{% endif %}{% endfor %}];
+  const statusLabels = [{% for s in status_stats %}"{{ s.status|title }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+  const statusData = [{% for s in status_stats %}{{ s.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+  const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#1d4ed8';
+  const chartDefaults = { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } };
+
+  if (document.getElementById('genderChart')) {
+    new Chart(document.getElementById('genderChart'), {
+      type: 'doughnut',
+      data: {
+        labels: genderLabels.length ? genderLabels : ['No data'],
+        datasets: [{ data: genderData.length ? genderData : [1], backgroundColor: ['#1d4ed8','#60a5fa','#93c5fd','#bfdbfe'] }]
+      },
+      options: chartDefaults
+    });
+  }
+  if (document.getElementById('ageChart')) {
+    new Chart(document.getElementById('ageChart'), {
+      type: 'bar',
+      data: { labels: ageLabels, datasets: [{ label: 'People', data: ageData, backgroundColor: brand, borderRadius: 8 }] },
+      options: {
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+  if (document.getElementById('statusChart')) {
+    new Chart(document.getElementById('statusChart'), {
+      type: 'pie',
+      data: {
+        labels: statusLabels.length ? statusLabels : ['No data'],
+        datasets: [{ data: statusData.length ? statusData : [1], backgroundColor: ['#94a3b8','#f59e0b','#10b981','#ef4444'] }]
+      },
+      options: chartDefaults
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard — ilmaCader{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl md:text-3xl font-bold">Welcome, {{ user.get_full_name|default:user.username }}</h1>
+  <p class="text-[var(--muted)] text-sm mt-1">Your family profile at a glance</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+  <div class="glass stat-card md:col-span-2">
+    <div class="text-sm text-[var(--muted)]">Profile Completion</div>
+    <div class="flex items-end justify-between gap-3 mt-2">
+      <div class="stat-value">{{ profile.completion_percent }}%</div>
+      <span class="badge badge-{{ profile.status }}">{{ profile.get_status_display }}</span>
+    </div>
+    <div class="progress mt-3"><span style="width: {{ profile.completion_percent }}%"></span></div>
+  </div>
+  <div class="glass stat-card">
+    <div class="stat-label">Family Status</div>
+    <div class="stat-value text-xl mt-2">{{ profile.get_status_display }}</div>
+  </div>
+  <div class="glass stat-card">
+    <div class="stat-label">Uploaded Documents</div>
+    <div class="stat-value">{{ doc_count }}</div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <div class="glass p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold">Quick Actions</h2>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{% url 'families:edit' %}">Edit Information</a>
+      <a class="btn btn-ghost" href="{% url 'documents:upload' %}">Upload Document</a>
+      <a class="btn btn-ghost" href="{% url 'reports:my_pdf' %}">Download PDF</a>
+      <a class="btn btn-ghost" href="{% url 'reports:my_print' %}" target="_blank">Print Profile</a>
+    </div>
+  </div>
+  <div class="glass p-5">
+    <h2 class="font-semibold mb-3">Notifications</h2>
+    <ul class="space-y-2 text-sm">
+      {% for n in notifications %}
+      <li class="border-b border-[var(--border)] pb-2">
+        <div class="font-medium">{{ n.title }}</div>
+        <div class="text-[var(--muted)]">{{ n.message }}</div>
+      </li>
+      {% empty %}
+      <li class="text-[var(--muted)]">No notifications yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

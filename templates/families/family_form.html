@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Family Information Form{% endblock %}
+{% block content %}
+<div class="mb-5">
+  <h1 class="text-2xl font-bold">Family Information</h1>
+  <p class="text-sm text-[var(--muted)]">Complete all sections. Your progress is saved when you submit the form.</p>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="space-y-4" x-data="{ tab: 'personal' }">
+  {% csrf_token %}
+  <div class="glass p-2 flex flex-wrap gap-1 no-print sticky top-[4.2rem] z-20">
+    <template x-for="t in [
+      ['personal','Personal'],['parents','Parents'],['spouse','Spouse'],
+      ['children','Children'],['health','Health'],['employment','Employment'],['property','Property']
+    ]">
+      <button type="button" class="btn text-sm py-2"
+              :class="tab === t[0] ? 'btn-primary' : 'btn-ghost'"
+              @click="tab = t[0]" x-text="t[1]"></button>
+    </template>
+  </div>
+
+  <section class="glass p-5 space-y-3" x-show="tab==='personal'" x-cloak>
+    <h2 class="font-semibold text-brand">Personal Information</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {% for field in profile_form %}
+        <div class="{% if field.name == 'address' %}md:col-span-2{% endif %}">
+          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-red-500 text-xs">{{ field.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="glass p-5 space-y-3" x-show="tab==='parents'" x-cloak>
+    <h2 class="font-semibold text-brand">Parents</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {% for field in parent_form %}
+        <div>
+          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
+          {{ field }}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="glass p-5 space-y-3" x-show="tab==='spouse'" x-cloak>
+    <h2 class="font-semibold text-brand">Spouse</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {% for field in spouse_form %}
+        <div>
+          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
+          {{ field }}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="glass p-5 space-y-3" x-show="tab==='children'" x-cloak>
+    <h2 class="font-semibold text-brand">Children</h2>
+    {{ child_formset.management_form }}
+    {% for form in child_formset %}
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-2 border-b border-[var(--border)] pb-3 mb-3">
+        {% for field in form.visible_fields %}
+          <div>
+            {% if forloop.parentloop.first %}<label class="text-xs text-[var(--muted)]">{{ field.label }}</label>{% endif %}
+            {{ field }}
+          </div>
+        {% endfor %}
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="glass p-5 space-y-3" x-show="tab==='health'" x-cloak>
+    <h2 class="font-semibold text-brand">Health</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {% for field in health_form %}
+        <div class="{% if field.name == 'medical_conditions' or field.name == 'disabilities' %}md:col-span-2{% endif %}">
+          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
+          {{ field }}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="glass p-5 space-y-3" x-show="tab==='employment'" x-cloak>
+    <h2 class="font-semibold text-brand">Employment</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {% for field in employment_form %}
+        <div>
+          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
+          {{ field }}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="glass p-5 space-y-3" x-show="tab==='property'" x-cloak>
+    <h2 class="font-semibold text-brand">Property</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {% for field in property_form %}
+        <div>
+          <label class="text-sm text-[var(--muted)]">{{ field.label }}</label>
+          {{ field }}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="flex gap-2">
+    <button class="btn btn-primary" type="submit">Save Family Information</button>
+    <a class="btn btn-ghost" href="{% if user.is_administrator %}{% url 'families:list' %}{% else %}{% url 'families:mine' %}{% endif %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

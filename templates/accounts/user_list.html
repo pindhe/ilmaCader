@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Users — ilmaCader{% endblock %}
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+  <div>
+    <h1 class="text-2xl font-bold">Users</h1>
+    <p class="text-sm text-[var(--muted)]">Create and manage system accounts</p>
+  </div>
+  <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">Create User</a>
+</div>
+
+<form method="get" class="glass p-3 mb-4 flex gap-2">
+  <input class="form-input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Search all users...">
+  <button class="btn btn-primary" type="submit">Search</button>
+</form>
+
+<div class="glass table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.username }}</td>
+        <td>{{ u.get_full_name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.get_role_display }}</td>
+        <td>{% if u.is_active_account %}<span class="badge badge-approved">Active</span>{% else %}<span class="badge badge-rejected">Inactive</span>{% endif %}</td>
+        <td class="space-x-1 whitespace-nowrap">
+          <a class="btn btn-ghost text-xs py-1" href="{% url 'accounts:user_edit' u.pk %}">Edit</a>
+          <a class="btn btn-ghost text-xs py-1" href="{% url 'accounts:user_reset_password' u.pk %}">Reset PW</a>
+          <form class="inline" method="post" action="{% url 'accounts:user_toggle' u.pk %}">{% csrf_token %}
+            <button class="btn btn-ghost text-xs py-1" type="submit">{% if u.is_active_account %}Deactivate{% else %}Activate{% endif %}</button>
+          </form>
+          <form class="inline" method="post" action="{% url 'accounts:user_delete' u.pk %}" onsubmit="return confirm('Delete this user?');">{% csrf_token %}
+            <button class="btn btn-danger text-xs py-1" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-[var(--muted)]">No users found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+Django>=5.0,<6
+psycopg2-binary>=2.9
+python-dotenv>=1.0
+Pillow>=10.0
+xhtml2pdf>=0.2.16
+reportlab>=4.0
+django-widget-tweaks>=1.5

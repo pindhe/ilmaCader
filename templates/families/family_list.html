@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Families{% endblock %}
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between gap-3 mb-5">
+  <div>
+    <h1 class="text-2xl font-bold">Family Records</h1>
+    <p class="text-sm text-[var(--muted)]">Search and manage all family profiles</p>
+  </div>
+</div>
+<form method="get" class="glass p-3 mb-4 flex flex-wrap gap-2">
+  <input class="form-input flex-1 min-w-[180px]" name="q" value="{{ request.GET.q }}" placeholder="Search families...">
+  <select class="form-input w-auto" name="status">
+    <option value="">All statuses</option>
+    <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Draft</option>
+    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+    <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
+    <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejected</option>
+  </select>
+  <button class="btn btn-primary" type="submit">Search</button>
+</form>
+<div class="glass table-wrap">
+  <table class="data">
+    <thead><tr><th>Name</th><th>User</th><th>Status</th><th>Completion</th><th>Updated</th><th></th></tr></thead>
+    <tbody>
+      {% for f in families %}
+      <tr>
+        <td>{{ f.full_name|default:"—" }}</td>
+        <td>{{ f.user.username }}</td>
+        <td><span class="badge badge-{{ f.status }}">{{ f.get_status_display }}</span></td>
+        <td>{{ f.completion_percent }}%</td>
+        <td>{{ f.updated_at|date:"M d, Y" }}</td>
+        <td><a class="btn btn-ghost text-xs py-1" href="{% url 'families:detail' f.pk %}">View</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-[var(--muted)]">No family records.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
