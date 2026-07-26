@@ -9,6 +9,7 @@ from django.views.generic import DetailView, ListView, View
 from accounts.mixins import AdministratorRequiredMixin
 from core.models import AuditLog
 from core.utils import log_action
+from documents.models import Document
 from notifications.models import Notification
 from .forms import (
     ChildFormSet,
@@ -113,6 +114,7 @@ class FamilyEditView(LoginRequiredMixin, View):
         context = self._forms(profile)
         context["profile"] = profile
         context.update(self._gate_flags(profile))
+        context["national_id_doc"] = self._national_id_doc(profile)
         return render(request, self.template_name, context)
 
     def post(self, request, pk=None):
@@ -178,6 +180,37 @@ class FamilyEditView(LoginRequiredMixin, View):
             child_formset.instance = profile
             child_formset.save()
 
+            national_id_file = profile_form.cleaned_data.get("national_id_document")
+            if national_id_file:
+                existing_id_doc = (
+                    Document.objects.filter(
+                        profile=profile,
+                        doc_type=Document.DocType.NATIONAL_ID,
+                    )
+                    .order_by("-uploaded_at")
+                    .first()
+                )
+                if existing_id_doc:
+                    existing_id_doc.file = national_id_file
+                    existing_id_doc.title = "National ID"
+                    existing_id_doc.user = profile.user
+                    existing_id_doc.save()
+                else:
+                    Document.objects.create(
+                        user=profile.user,
+                        profile=profile,
+                        doc_type=Document.DocType.NATIONAL_ID,
+                        title="National ID",
+                        file=national_id_file,
+                    )
+                log_action(
+                    request,
+                    AuditLog.Action.UPLOAD,
+                    f"Uploaded National ID for {profile.user.username}",
+                    "Document",
+                    profile.pk,
+                )
+
             log_action(
                 request,
                 AuditLog.Action.UPDATE,
@@ -206,9 +239,17 @@ class FamilyEditView(LoginRequiredMixin, View):
             "employment_form": employment_form,
             "property_form": property_form,
             "child_formset": child_formset,
+            "national_id_doc": self._national_id_doc(profile),
         }
         ctx.update(self._gate_flags(profile, spouse_form=spouse_form, child_formset=child_formset))
         return render(request, self.template_name, ctx)
+
+    def _national_id_doc(self, profile):
+        return (
+            Document.objects.filter(profile=profile, doc_type=Document.DocType.NATIONAL_ID)
+            .order_by("-uploaded_at")
+            .first()
+        )
 
     def _gate_flags(self, profile, spouse_form=None, child_formset=None):
         from django.core.exceptions import ObjectDoesNotExist

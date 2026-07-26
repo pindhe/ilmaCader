@@ -69,6 +69,27 @@
           {% include "families/includes/field.html" with field=profile_form.date_of_birth %}
           {% include "families/includes/field.html" with field=profile_form.photo %}
           {% include "families/includes/field.html" with field=profile_form.national_id %}
+          <div class="form-field form-field--full{% if profile_form.national_id_document.errors %} has-error{% endif %}">
+            <label class="form-field__label" for="{{ profile_form.national_id_document.id_for_label }}">
+              {{ profile_form.national_id_document.label }}
+            </label>
+            {{ profile_form.national_id_document }}
+            {% if profile_form.national_id_document.help_text %}
+              <p class="form-field__help">{{ profile_form.national_id_document.help_text }}</p>
+            {% endif %}
+            {% if national_id_doc %}
+              <p class="form-field__help">
+                Current file:
+                <a class="text-brand font-semibold" href="{{ national_id_doc.file.url }}" target="_blank" rel="noopener">
+                  View uploaded National ID
+                </a>
+                <span class="text-[var(--muted)]">· {{ national_id_doc.uploaded_at|timesince }} ago</span>
+              </p>
+            {% endif %}
+            {% if profile_form.national_id_document.errors %}
+              <p class="form-field__error">{{ profile_form.national_id_document.errors|striptags }}</p>
+            {% endif %}
+          </div>
           {% include "families/includes/field.html" with field=profile_form.birth_certificate_number %}
         </div>
       </div>

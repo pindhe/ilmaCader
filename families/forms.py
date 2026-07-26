@@ -1,5 +1,8 @@
 from django import forms
 from django.forms import inlineformset_factory
+
+from documents.models import validate_upload
+
 from .models import (
     FamilyProfile,
     Parent,
@@ -12,6 +15,14 @@ from .models import (
 
 
 class FamilyProfileForm(forms.ModelForm):
+    national_id_document = forms.FileField(
+        required=False,
+        label="National ID upload",
+        help_text="Upload a PDF or image of your National ID (PDF, JPG, PNG — max 10MB).",
+        validators=[validate_upload],
+        widget=forms.ClearableFileInput(attrs={"class": "form-input", "accept": ".pdf,.jpg,.jpeg,.png"}),
+    )
+
     class Meta:
         model = FamilyProfile
         fields = [
@@ -40,14 +51,18 @@ class FamilyProfileForm(forms.ModelForm):
             "address": forms.Textarea(attrs={"rows": 3, "class": "form-input"}),
             "gender": forms.Select(attrs={"class": "form-input"}),
         }
+        labels = {
+            "national_id": "National ID number",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for name, field in self.fields.items():
-            if name not in ("photo", "address", "gender", "date_of_birth"):
+            if name not in ("photo", "address", "gender", "date_of_birth", "national_id_document"):
                 field.widget.attrs.setdefault("class", "form-input")
             if name == "photo":
                 field.widget.attrs.setdefault("class", "form-input")
+        self.fields["national_id"].help_text = "Enter the ID number shown on your card."
 
 
 class ParentForm(forms.ModelForm):
