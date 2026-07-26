@@ -54,3 +54,24 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.action} — {self.message[:60]}"
+
+
+class Category(models.Model):
+    class Kind(models.TextChoices):
+        FAMILY = "family", "Family"
+        DOCUMENT = "document", "Document"
+        GENERAL = "general", "General"
+
+    name = models.CharField(max_length=120, unique=True)
+    kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.GENERAL)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "Categories"
+
+    def __str__(self):
+        return self.name

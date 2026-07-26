@@ -1,40 +1,171 @@
 {% extends "base.html" %}
-{% block title %}Families{% endblock %}
+{% block title %}Families — ilmaCader{% endblock %}
 {% block content %}
-<div class="flex flex-col sm:flex-row justify-between gap-3 mb-5">
+<div class="mb-6 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
   <div>
-    <h1 class="text-2xl font-bold">Family Records</h1>
-    <p class="text-sm text-[var(--muted)]">Search and manage all family profiles</p>
+    <p class="text-sm text-brand font-semibold tracking-wide uppercase">Administration</p>
+    <h1 class="text-2xl md:text-3xl font-bold mt-1">Families</h1>
+    <p class="text-sm text-[var(--muted)] mt-1">Search, review, and manage all family profiles</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="?status=pending" class="btn btn-ghost">Pending ({{ pending_count }})</a>
+    <a href="{% url 'reports:summary' %}" class="btn btn-ghost">Summary Report</a>
   </div>
 </div>
-<form method="get" class="glass p-3 mb-4 flex flex-wrap gap-2">
-  <input class="form-input flex-1 min-w-[180px]" name="q" value="{{ request.GET.q }}" placeholder="Search families...">
-  <select class="form-input w-auto" name="status">
+
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
+  <a href="{% url 'families:list' %}" class="glass stat-card block">
+    <div class="stat-value text-2xl">{{ total_families }}</div>
+    <div class="stat-label">Total</div>
+  </a>
+  <a href="?status=draft" class="glass stat-card block">
+    <div class="stat-value text-2xl">{{ draft_count }}</div>
+    <div class="stat-label">Draft</div>
+  </a>
+  <a href="?status=pending" class="glass stat-card block">
+    <div class="stat-value text-2xl">{{ pending_count }}</div>
+    <div class="stat-label">Pending</div>
+  </a>
+  <a href="?status=approved" class="glass stat-card block">
+    <div class="stat-value text-2xl">{{ approved_count }}</div>
+    <div class="stat-label">Approved</div>
+  </a>
+  <a href="?status=rejected" class="glass stat-card block">
+    <div class="stat-value text-2xl">{{ rejected_count }}</div>
+    <div class="stat-label">Rejected</div>
+  </a>
+  <div class="glass stat-card">
+    <div class="stat-value text-2xl">{{ completed_count }}</div>
+    <div class="stat-label">≥80% Complete</div>
+  </div>
+</div>
+
+<form method="get" class="glass p-3 mb-4 grid grid-cols-1 md:grid-cols-6 gap-2">
+  <input class="form-input md:col-span-2" name="q" value="{{ request.GET.q }}" placeholder="Search name, ID, user, phone, city...">
+  <select class="form-input" name="status">
     <option value="">All statuses</option>
     <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Draft</option>
     <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
     <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
     <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejected</option>
   </select>
-  <button class="btn btn-primary" type="submit">Search</button>
+  <select class="form-input" name="gender">
+    <option value="">All genders</option>
+    <option value="male" {% if request.GET.gender == 'male' %}selected{% endif %}>Male</option>
+    <option value="female" {% if request.GET.gender == 'female' %}selected{% endif %}>Female</option>
+    <option value="other" {% if request.GET.gender == 'other' %}selected{% endif %}>Other</option>
+  </select>
+  <select class="form-input" name="category">
+    <option value="">All categories</option>
+    {% for c in categories %}
+    <option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>
+    {% endfor %}
+  </select>
+  <div class="flex gap-2">
+    <select class="form-input" name="region">
+      <option value="">All regions</option>
+      {% for r in regions %}
+      <option value="{{ r }}" {% if request.GET.region == r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-primary shrink-0" type="submit">Filter</button>
+  </div>
 </form>
+
 <div class="glass table-wrap">
   <table class="data">
-    <thead><tr><th>Name</th><th>User</th><th>Status</th><th>Completion</th><th>Updated</th><th></th></tr></thead>
+    <thead>
+      <tr>
+        <th>Family</th>
+        <th>Account</th>
+        <th>Contact</th>
+        <th>Location</th>
+        <th>Status</th>
+        <th>Completion</th>
+        <th>Updated</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
     <tbody>
       {% for f in families %}
       <tr>
-        <td>{{ f.full_name|default:"—" }}</td>
-        <td>{{ f.user.username }}</td>
+        <td>
+          <div class="flex items-center gap-3">
+            {% if f.photo %}
+              <img src="{{ f.photo.url }}" alt="" class="w-10 h-10 rounded-xl object-cover border border-[var(--border)] shrink-0">
+            {% else %}
+              <div class="w-10 h-10 rounded-xl bg-brand text-white flex items-center justify-center font-bold text-sm shrink-0">
+                {{ f.first_name|default:f.user.username|slice:":1"|upper }}
+              </div>
+            {% endif %}
+            <div>
+              <div class="font-semibold">{{ f.full_name|default:"—" }}</div>
+              <div class="text-xs text-[var(--muted)]">
+                {{ f.get_gender_display|default:"—" }}
+                {% if f.national_id %} · ID {{ f.national_id }}{% endif %}
+              </div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="text-sm font-medium">{{ f.user.username }}</div>
+          {% if f.user.category %}
+            <span class="badge badge-draft mt-1">{{ f.user.category.name }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="text-sm">{{ f.phone|default:f.user.phone|default:"—" }}</div>
+          <div class="text-xs text-[var(--muted)]">{{ f.email|default:f.user.email|default:"" }}</div>
+        </td>
+        <td class="text-sm">
+          <div>{{ f.city|default:"—" }}{% if f.district %}, {{ f.district }}{% endif %}</div>
+          <div class="text-xs text-[var(--muted)]">{{ f.region|default:"" }}</div>
+        </td>
         <td><span class="badge badge-{{ f.status }}">{{ f.get_status_display }}</span></td>
-        <td>{{ f.completion_percent }}%</td>
-        <td>{{ f.updated_at|date:"M d, Y" }}</td>
-        <td><a class="btn btn-ghost text-xs py-1" href="{% url 'families:detail' f.pk %}">View</a></td>
+        <td style="min-width:120px">
+          <div class="flex items-center gap-2">
+            <div class="progress flex-1"><span style="width: {{ f.completion_percent }}%"></span></div>
+            <span class="text-xs font-semibold text-[var(--muted)]">{{ f.completion_percent }}%</span>
+          </div>
+        </td>
+        <td class="text-sm whitespace-nowrap">{{ f.updated_at|date:"M d, Y" }}</td>
+        <td>
+          <div class="flex flex-wrap gap-1">
+            <a class="btn btn-ghost text-xs py-1" href="{% url 'families:detail' f.pk %}">View</a>
+            <a class="btn btn-ghost text-xs py-1" href="{% url 'families:admin_edit' f.pk %}">Edit</a>
+            <a class="btn btn-ghost text-xs py-1" href="{% url 'reports:pdf' f.pk %}">PDF</a>
+            {% if f.status == 'pending' %}
+            <form method="post" action="{% url 'families:approve' f.pk %}">{% csrf_token %}
+              <input type="hidden" name="action" value="approve">
+              <button class="btn btn-success text-xs py-1" type="submit">Approve</button>
+            </form>
+            <form method="post" action="{% url 'families:approve' f.pk %}">{% csrf_token %}
+              <input type="hidden" name="action" value="reject">
+              <button class="btn btn-danger text-xs py-1" type="submit">Reject</button>
+            </form>
+            {% endif %}
+            <form method="post" action="{% url 'families:delete' f.pk %}" onsubmit="return confirm('Delete family record for {{ f.user.username }}?');">{% csrf_token %}
+              <button class="btn btn-danger text-xs py-1" type="submit">Delete</button>
+            </form>
+          </div>
+        </td>
       </tr>
       {% empty %}
-      <tr><td colspan="6" class="text-[var(--muted)]">No family records.</td></tr>
+      <tr><td colspan="8" class="text-center text-[var(--muted)] py-10">No family records found.</td></tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+
+{% if is_paginated %}
+<div class="mt-4 flex justify-center gap-2">
+  {% if page_obj.has_previous %}
+    <a class="btn btn-ghost text-sm" href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}&gender={{ request.GET.gender }}&category={{ request.GET.category }}&region={{ request.GET.region }}">Previous</a>
+  {% endif %}
+  <span class="text-sm text-[var(--muted)] self-center">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a class="btn btn-ghost text-sm" href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}&gender={{ request.GET.gender }}&category={{ request.GET.category }}&region={{ request.GET.region }}">Next</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

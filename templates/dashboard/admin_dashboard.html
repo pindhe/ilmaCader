@@ -8,7 +8,7 @@
     <p class="text-[var(--muted)] text-sm mt-1">Family records overview, approvals, and system activity</p>
   </div>
   <div class="flex flex-wrap gap-2">
-    <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">Create User</a>
+    <a href="{% url 'accounts:user_list' %}?new=1" class="btn btn-primary">Create User</a>
     <a href="{% url 'families:list' %}?status=pending" class="btn btn-ghost">Pending Profiles</a>
     <a href="{% url 'reports:summary' %}" class="btn btn-ghost">Summary Report</a>
   </div>

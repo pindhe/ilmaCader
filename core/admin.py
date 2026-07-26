@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AuditLog, SiteSettings
+from .models import AuditLog, Category, SiteSettings
 
 
 @admin.register(SiteSettings)
@@ -13,3 +13,10 @@ class AuditLogAdmin(admin.ModelAdmin):
     list_filter = ("action", "created_at")
     search_fields = ("message", "model_name", "user__username")
     readonly_fields = ("created_at",)
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "kind", "is_active", "updated_at")
+    list_filter = ("kind", "is_active")
+    search_fields = ("name", "description")

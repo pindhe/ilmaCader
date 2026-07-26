@@ -10,7 +10,7 @@ from django.contrib.auth.views import (
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, ListView, UpdateView, View
+from django.views.generic import ListView, UpdateView, View
 
 from core.models import AuditLog, SiteSettings
 from core.utils import log_action
@@ -88,8 +88,11 @@ class UserListView(AdministratorRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        qs = CustomUser.objects.all()
+        qs = CustomUser.objects.select_related("category").all()
         q = self.request.GET.get("q", "").strip()
+        role = self.request.GET.get("role", "").strip()
+        status = self.request.GET.get("status", "").strip()
+        category = self.request.GET.get("category", "").strip()
         if q:
             from django.db.models import Q
 
@@ -98,28 +101,74 @@ class UserListView(AdministratorRequiredMixin, ListView):
                 | Q(first_name__icontains=q)
                 | Q(last_name__icontains=q)
                 | Q(email__icontains=q)
+                | Q(phone__icontains=q)
+                | Q(category__name__icontains=q)
             )
+        if role in (CustomUser.Role.ADMIN, CustomUser.Role.USER):
+            qs = qs.filter(role=role)
+        if status == "active":
+            qs = qs.filter(is_active_account=True)
+        elif status == "inactive":
+            qs = qs.filter(is_active_account=False)
+        if category.isdigit():
+            qs = qs.filter(category_id=int(category))
         return qs
 
+    def get_context_data(self, **kwargs):
+        from core.models import Category
 
-class UserCreateView(AdministratorRequiredMixin, CreateView):
-    model = CustomUser
-    form_class = UserCreateForm
-    template_name = "accounts/user_form.html"
-    success_url = reverse_lazy("accounts:user_list")
-
-    def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        response = super().form_valid(form)
-        log_action(
-            self.request,
-            AuditLog.Action.CREATE,
-            f"Created user {self.object.username}",
-            "CustomUser",
-            self.object.pk,
+        ctx = super().get_context_data(**kwargs)
+        all_users = CustomUser.objects.all()
+        ctx["create_form"] = kwargs.get("create_form") or UserCreateForm()
+        ctx["open_create_modal"] = bool(
+            kwargs.get("open_create_modal")
+            or self.request.GET.get("new")
+            or (self.request.method == "POST" and "create_user" in self.request.POST)
         )
-        messages.success(self.request, "User created successfully.")
-        return response
+        ctx["total_users"] = all_users.count()
+        ctx["admin_count"] = all_users.filter(role=CustomUser.Role.ADMIN).count()
+        ctx["user_count"] = all_users.filter(role=CustomUser.Role.USER).count()
+        ctx["active_count"] = all_users.filter(is_active_account=True).count()
+        ctx["inactive_count"] = all_users.filter(is_active_account=False).count()
+        ctx["categories"] = Category.objects.filter(is_active=True).order_by("name")
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action") != "create_user":
+            return redirect("accounts:user_list")
+
+        form = UserCreateForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.created_by = request.user
+            user.save()
+            log_action(
+                request,
+                AuditLog.Action.CREATE,
+                f"Created user {user.username}",
+                "CustomUser",
+                user.pk,
+            )
+            messages.success(request, f"User “{user.username}” created successfully.")
+            return redirect("accounts:user_list")
+
+        self.object_list = self.get_queryset()
+        context = self.get_context_data(
+            object_list=self.object_list,
+            create_form=form,
+            open_create_modal=True,
+        )
+        return self.render_to_response(context)
+
+
+class UserCreateView(AdministratorRequiredMixin, View):
+    """Legacy create URL opens the users page modal."""
+
+    def get(self, request):
+        return redirect("/users/?new=1")
+
+    def post(self, request):
+        return redirect("/users/?new=1")
 
 
 class UserUpdateView(AdministratorRequiredMixin, UpdateView):

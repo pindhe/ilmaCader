@@ -34,21 +34,56 @@ class FamilyListView(AdministratorRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        qs = FamilyProfile.objects.select_related("user").all()
+        qs = FamilyProfile.objects.select_related("user", "user__category").all()
         q = self.request.GET.get("q", "").strip()
         status = self.request.GET.get("status", "").strip()
+        gender = self.request.GET.get("gender", "").strip()
+        category = self.request.GET.get("category", "").strip()
+        region = self.request.GET.get("region", "").strip()
+
         if q:
             qs = qs.filter(
                 Q(first_name__icontains=q)
+                | Q(middle_name__icontains=q)
                 | Q(last_name__icontains=q)
                 | Q(national_id__icontains=q)
                 | Q(user__username__icontains=q)
                 | Q(phone__icontains=q)
                 | Q(email__icontains=q)
+                | Q(city__icontains=q)
+                | Q(district__icontains=q)
+                | Q(region__icontains=q)
+                | Q(user__category__name__icontains=q)
             )
         if status:
             qs = qs.filter(status=status)
+        if gender:
+            qs = qs.filter(gender=gender)
+        if category.isdigit():
+            qs = qs.filter(user__category_id=int(category))
+        if region:
+            qs = qs.filter(region__icontains=region)
         return qs
+
+    def get_context_data(self, **kwargs):
+        from core.models import Category
+
+        ctx = super().get_context_data(**kwargs)
+        all_profiles = FamilyProfile.objects.all()
+        ctx["total_families"] = all_profiles.count()
+        ctx["draft_count"] = all_profiles.filter(status=FamilyProfile.Status.DRAFT).count()
+        ctx["pending_count"] = all_profiles.filter(status=FamilyProfile.Status.PENDING).count()
+        ctx["approved_count"] = all_profiles.filter(status=FamilyProfile.Status.APPROVED).count()
+        ctx["rejected_count"] = all_profiles.filter(status=FamilyProfile.Status.REJECTED).count()
+        ctx["completed_count"] = all_profiles.filter(completion_percent__gte=80).count()
+        ctx["categories"] = Category.objects.filter(is_active=True).order_by("name")
+        ctx["regions"] = (
+            FamilyProfile.objects.exclude(region="")
+            .values_list("region", flat=True)
+            .distinct()
+            .order_by("region")[:50]
+        )
+        return ctx
 
 
 class FamilyDetailView(LoginRequiredMixin, DetailView):

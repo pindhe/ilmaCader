@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Categories — ilmaCader{% endblock %}
+{% block content %}
+<div
+  x-data="{ openCreate: {{ open_create_modal|yesno:'true,false' }}, editId: null }"
+  @keydown.escape.window="openCreate = false; editId = null"
+>
+  <div class="mb-6 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+    <div>
+      <p class="text-sm text-brand font-semibold tracking-wide uppercase">Category</p>
+      <h1 class="text-2xl md:text-3xl font-bold mt-1">Categories</h1>
+      <p class="text-sm text-[var(--muted)] mt-1">Organize families, documents, and general records</p>
+    </div>
+    <button type="button" class="btn btn-primary" @click="openCreate = true">+ Add Category</button>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+    <div class="glass stat-card"><div class="stat-value text-2xl">{{ total_categories }}</div><div class="stat-label">Total</div></div>
+    <div class="glass stat-card"><div class="stat-value text-2xl">{{ family_count }}</div><div class="stat-label">Family</div></div>
+    <div class="glass stat-card"><div class="stat-value text-2xl">{{ document_count }}</div><div class="stat-label">Document</div></div>
+    <div class="glass stat-card"><div class="stat-value text-2xl">{{ active_count }}</div><div class="stat-label">Active</div></div>
+  </div>
+
+  <form method="get" class="glass p-3 mb-4 grid grid-cols-1 md:grid-cols-4 gap-2">
+    <input class="form-input md:col-span-2" type="search" name="q" value="{{ request.GET.q }}" placeholder="Search categories...">
+    <select class="form-input" name="kind">
+      <option value="">All kinds</option>
+      <option value="family" {% if request.GET.kind == 'family' %}selected{% endif %}>Family</option>
+      <option value="document" {% if request.GET.kind == 'document' %}selected{% endif %}>Document</option>
+      <option value="general" {% if request.GET.kind == 'general' %}selected{% endif %}>General</option>
+    </select>
+    <div class="flex gap-2">
+      <select class="form-input" name="status">
+        <option value="">All status</option>
+        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+      <button class="btn btn-primary shrink-0" type="submit">Filter</button>
+    </div>
+  </form>
+
+  <div class="glass table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Kind</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in categories %}
+        <tr>
+          <td class="font-semibold">{{ c.name }}</td>
+          <td><span class="badge badge-draft">{{ c.get_kind_display }}</span></td>
+          <td class="text-sm text-[var(--muted)] max-w-xs truncate">{{ c.description|default:"—" }}</td>
+          <td>
+            {% if c.is_active %}<span class="badge badge-approved">Active</span>
+            {% else %}<span class="badge badge-rejected">Inactive</span>{% endif %}
+          </td>
+          <td>
+            <div class="flex flex-wrap gap-1">
+              <button type="button" class="btn btn-ghost text-xs py-1" @click="editId = editId === {{ c.pk }} ? null : {{ c.pk }}">Edit</button>
+              <form method="post" action="{% url 'core:category_toggle' c.pk %}">{% csrf_token %}
+                <button class="btn btn-ghost text-xs py-1" type="submit">{% if c.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+              </form>
+              <form method="post" action="{% url 'core:category_delete' c.pk %}" onsubmit="return confirm('Delete category {{ c.name }}?');">{% csrf_token %}
+                <button class="btn btn-danger text-xs py-1" type="submit">Delete</button>
+              </form>
+            </div>
+
+            <div class="mt-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-strong)]" x-show="editId === {{ c.pk }}" x-cloak>
+              <form method="post" action="{% url 'core:category_edit' c.pk %}" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {% csrf_token %}
+                <div>
+                  <label class="text-xs text-[var(--muted)]">Name</label>
+                  <input class="form-input" name="name" value="{{ c.name }}" required>
+                </div>
+                <div>
+                  <label class="text-xs text-[var(--muted)]">Kind</label>
+                  <select class="form-input" name="kind">
+                    <option value="family" {% if c.kind == 'family' %}selected{% endif %}>Family</option>
+                    <option value="document" {% if c.kind == 'document' %}selected{% endif %}>Document</option>
+                    <option value="general" {% if c.kind == 'general' %}selected{% endif %}>General</option>
+                  </select>
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="text-xs text-[var(--muted)]">Description</label>
+                  <textarea class="form-input" name="description" rows="2">{{ c.description }}</textarea>
+                </div>
+                <div class="sm:col-span-2 flex items-center gap-2">
+                  <label class="text-sm flex items-center gap-2">
+                    <input type="checkbox" name="is_active" {% if c.is_active %}checked{% endif %}> Active
+                  </label>
+                  <button class="btn btn-primary text-xs py-1 ml-auto" type="submit">Save</button>
+                  <button class="btn btn-ghost text-xs py-1" type="button" @click="editId = null">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-[var(--muted)] py-8">No categories yet. Add your first one.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="modal-root" x-show="openCreate" x-cloak x-transition.opacity>
+    <div class="modal-backdrop" @click="openCreate = false"></div>
+    <div class="modal-panel glass" role="dialog" aria-modal="true" @click.stop
+         x-show="openCreate"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-3 scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 scale-100">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-xl font-bold text-brand">Add Category</h2>
+          <p class="text-sm text-[var(--muted)] mt-1">Create a category for family or document records.</p>
+        </div>
+        <button type="button" class="btn btn-ghost text-sm px-3" @click="openCreate = false">Close</button>
+      </div>
+      <form method="post" action="{% url 'core:category_list' %}" class="space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_category">
+        {% for field in create_form %}
+          <div>
+            <label class="text-sm font-medium text-[var(--muted)]">{{ field.label }}</label>
+            {% if field.name == 'is_active' %}
+              <label class="flex items-center gap-2 mt-2 text-sm">{{ field }} Active</label>
+            {% else %}
+              {{ field }}
+            {% endif %}
+            {% if field.errors %}<div class="text-red-500 text-xs mt-1">{{ field.errors|striptags }}</div>{% endif %}
+          </div>
+        {% endfor %}
+        <div class="flex gap-2 pt-2">
+          <button class="btn btn-primary flex-1" type="submit">Create Category</button>
+          <button class="btn btn-ghost" type="button" @click="openCreate = false">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

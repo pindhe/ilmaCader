@@ -9,6 +9,13 @@ class CustomUser(AbstractUser):
 
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.USER)
     phone = models.CharField(max_length=30, blank=True)
+    category = models.ForeignKey(
+        "core.Category",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users",
+    )
     is_active_account = models.BooleanField(default=True, help_text="Soft active flag managed by admin.")
     must_change_password = models.BooleanField(default=False)
     created_by = models.ForeignKey(

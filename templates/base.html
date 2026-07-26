@@ -87,6 +87,14 @@
             <span class="sidebar-link__label">Reports</span>
           </a>
 
+          <p class="sidebar-section">Category</p>
+          <a class="sidebar-link {% if request.resolver_match.url_name == 'category_list' or 'category' in request.resolver_match.url_name|default:'' %}active{% endif %}" href="{% url 'core:category_list' %}">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>
+            </span>
+            <span class="sidebar-link__label">Categories</span>
+          </a>
+
           <p class="sidebar-section">Account</p>
           <a class="sidebar-link {% if request.resolver_match.app_name == 'notifications' %}active{% endif %}" href="{% url 'notifications:list' %}">
             <span class="sidebar-link__icon">
