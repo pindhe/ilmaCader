@@ -57,10 +57,14 @@
 
       <nav class="sidebar-nav">
         <p class="sidebar-section">Main</p>
-        <a class="sidebar-link {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'admin' %}active{% endif %}" href="{% url 'dashboard:admin' %}">
-          <span class="sidebar-link__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg></span>
-          <span class="sidebar-link__label">Dashboard</span>
-        </a>
+          <a class="sidebar-link {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'admin' %}active{% endif %}" href="{% url 'dashboard:admin' %}">
+            <span class="sidebar-link__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg></span>
+            <span class="sidebar-link__label">Dashboard</span>
+          </a>
+          <a class="sidebar-link {% if request.resolver_match.url_name == 'gallery' %}active{% endif %}" href="{% url 'dashboard:gallery' %}">
+            <span class="sidebar-link__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+            <span class="sidebar-link__label">Gallery</span>
+          </a>
         <a class="sidebar-link {% if request.resolver_match.app_name == 'accounts' and 'user' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts:user_list' %}">
           <span class="sidebar-link__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
           <span class="sidebar-link__label">Users</span>
@@ -143,6 +147,9 @@
           </a>
           <a class="topnav__link {% if request.resolver_match.url_name == 'mine' or request.resolver_match.url_name == 'detail' or request.resolver_match.url_name == 'edit' %}active{% endif %}" href="{% url 'families:mine' %}" title="My Info" aria-label="My Info">
             <svg class="topnav__link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+          </a>
+          <a class="topnav__link {% if request.resolver_match.url_name == 'gallery' %}active{% endif %}" href="{% url 'dashboard:gallery' %}" title="Gallery" aria-label="Gallery">
+            <svg class="topnav__link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
           </a>
           <a class="topnav__link {% if request.resolver_match.app_name == 'documents' %}active{% endif %}" href="{% url 'documents:list' %}" title="Documents" aria-label="Documents">
             <svg class="topnav__link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>
@@ -264,6 +271,10 @@
           <span class="mobile-drawer__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg></span>
           <span>My Info</span>
         </a>
+        <a class="mobile-drawer__link {% if request.resolver_match.url_name == 'gallery' %}active{% endif %}" href="{% url 'dashboard:gallery' %}" @click="navOpen=false">
+          <span class="mobile-drawer__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+          <span>Gallery</span>
+        </a>
         <a class="mobile-drawer__link {% if request.resolver_match.app_name == 'documents' %}active{% endif %}" href="{% url 'documents:list' %}" @click="navOpen=false">
           <span class="mobile-drawer__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg></span>
           <span>Documents</span>
@@ -311,6 +322,10 @@
       <a class="mobile-tabbar__item {% if request.resolver_match.url_name == 'mine' or request.resolver_match.url_name == 'detail' or request.resolver_match.url_name == 'edit' %}active{% endif %}" href="{% url 'families:mine' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
         <span>Info</span>
+      </a>
+      <a class="mobile-tabbar__item {% if request.resolver_match.url_name == 'gallery' %}active{% endif %}" href="{% url 'dashboard:gallery' %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Gallery</span>
       </a>
       <a class="mobile-tabbar__item {% if request.resolver_match.app_name == 'documents' %}active{% endif %}" href="{% url 'documents:list' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>

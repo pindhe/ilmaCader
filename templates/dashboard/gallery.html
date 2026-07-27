@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Gallery — ilmaCader{% endblock %}
+{% block content %}
+<div class="gallery-page">
+  <header class="gallery-header mb-6">
+    <div>
+      <p class="text-sm text-brand font-semibold tracking-wide uppercase">Community</p>
+      <h1 class="text-2xl md:text-3xl font-bold mt-1">Member Gallery</h1>
+      <p class="text-sm text-[var(--muted)] mt-1">
+        Photos and names of family members. Upload your photo in Edit Profile to appear here.
+      </p>
+    </div>
+    <div class="gallery-header__stats">
+      <div class="glass stat-card">
+        <div class="stat-value text-xl">{{ member_count }}</div>
+        <div class="stat-label">Members</div>
+      </div>
+      <div class="glass stat-card">
+        <div class="stat-value text-xl">{{ photo_count }}</div>
+        <div class="stat-label">With photo</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="gallery-actions mb-5">
+    <a class="btn btn-primary" href="{% url 'families:edit' %}">Upload / update my photo</a>
+  </div>
+
+  <div class="gallery-grid">
+    {% for m in members %}
+      <article class="gallery-card glass {% if m.user_id == user.id %}is-me{% endif %}">
+        <div class="gallery-card__photo">
+          {% if m.photo %}
+            <img src="{{ m.photo.url }}" alt="{{ m.full_name|default:m.user.username }}" loading="lazy">
+          {% else %}
+            <span class="gallery-card__initial">
+              {{ m.first_name|default:m.user.username|slice:":1"|upper }}
+            </span>
+          {% endif %}
+        </div>
+        <div class="gallery-card__body">
+          <h2 class="gallery-card__name">
+            {{ m.full_name|default:m.user.get_full_name|default:m.user.username }}
+          </h2>
+          {% if m.user.category %}
+            <p class="gallery-card__meta">{{ m.user.category.name }}</p>
+          {% endif %}
+          {% if m.user_id == user.id %}
+            <span class="gallery-card__you">You</span>
+          {% endif %}
+        </div>
+      </article>
+    {% empty %}
+      <div class="gallery-empty glass">
+        <p class="font-semibold">No members yet.</p>
+        <p class="text-sm text-[var(--muted)] mt-1">When users upload profile photos, they will show here.</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

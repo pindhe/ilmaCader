@@ -163,3 +163,26 @@ class AdminDashboardView(AdministratorRequiredMixin, TemplateView):
             }
         )
         return ctx
+
+
+class GalleryView(LoginRequiredMixin, TemplateView):
+    """Member gallery: profile photo + name for each active user."""
+
+    template_name = "dashboard/gallery.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        members = (
+            FamilyProfile.objects.select_related("user", "user__category")
+            .filter(user__is_active=True, user__role=CustomUser.Role.USER)
+            .order_by("first_name", "last_name", "user__username")
+        )
+        with_photo = members.exclude(photo="").exclude(photo__isnull=True)
+        ctx.update(
+            {
+                "members": members,
+                "photo_count": with_photo.count(),
+                "member_count": members.count(),
+            }
+        )
+        return ctx
