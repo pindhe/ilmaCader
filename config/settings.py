@@ -8,7 +8,31 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-change-me-ilmacader-2026")
 DEBUG = os.getenv("DEBUG", "True").lower() in ("1", "true", "yes")
+
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+
+# Vercel sets VERCEL_URL like "my-app.vercel.app" (no scheme).
+_vercel_url = os.getenv("VERCEL_URL", "").strip()
+if _vercel_url:
+    ALLOWED_HOSTS.append(_vercel_url)
+    ALLOWED_HOSTS.append(".vercel.app")
+
+# Also accept any hosts listed explicitly, and common deploy platforms.
+if os.getenv("ALLOW_ALL_HOSTS", "").lower() in ("1", "true", "yes"):
+    ALLOWED_HOSTS = ["*"]
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if o.strip()
+]
+if _vercel_url:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{_vercel_url}")
+# Prefer https for production cookies when behind a proxy (Vercel/Render).
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 INSTALLED_APPS = [
     "django.contrib.admin",
