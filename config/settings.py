@@ -13,9 +13,11 @@ ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.
 
 # Vercel sets VERCEL_URL like "my-app.vercel.app" (no scheme).
 _vercel_url = os.getenv("VERCEL_URL", "").strip()
+_on_vercel = bool(os.getenv("VERCEL", "")) or bool(_vercel_url)
 if _vercel_url:
     ALLOWED_HOSTS.append(_vercel_url)
-    ALLOWED_HOSTS.append(".vercel.app")
+if _on_vercel:
+    ALLOWED_HOSTS.extend([".vercel.app", "ilma-cader.vercel.app"])
 
 # Also accept any hosts listed explicitly, and common deploy platforms.
 if os.getenv("ALLOW_ALL_HOSTS", "").lower() in ("1", "true", "yes"):
@@ -28,6 +30,10 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 if _vercel_url:
     CSRF_TRUSTED_ORIGINS.append(f"https://{_vercel_url}")
+if _on_vercel:
+    CSRF_TRUSTED_ORIGINS.append("https://ilma-cader.vercel.app")
+    CSRF_TRUSTED_ORIGINS.append("https://*.vercel.app")
+
 # Prefer https for production cookies when behind a proxy (Vercel/Render).
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -53,6 +59,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -85,14 +92,35 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Set USE_SQLITE=True in .env if PostgreSQL is not available yet.
+# Prefer Postgres when DATABASE_URL is set; otherwise SQLite.
+# On Vercel, default to SQLite in /tmp (serverless filesystem is read-only).
+_database_url = os.getenv("DATABASE_URL", "").strip()
 USE_SQLITE = os.getenv("USE_SQLITE", "False").lower() in ("1", "true", "yes")
+if _on_vercel and not _database_url:
+    USE_SQLITE = True
 
-if USE_SQLITE:
+if _database_url:
+    try:
+        import dj_database_url
+
+        DATABASES = {"default": dj_database_url.parse(_database_url, conn_max_age=600)}
+    except ImportError:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": os.getenv("DB_NAME", "ilmacader"),
+                "USER": os.getenv("DB_USER", "postgres"),
+                "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
+                "HOST": os.getenv("DB_HOST", "localhost"),
+                "PORT": os.getenv("DB_PORT", "5432"),
+            }
+        }
+elif USE_SQLITE:
+    _sqlite_name = Path("/tmp") / "ilmacader.sqlite3" if _on_vercel else (BASE_DIR / "db.sqlite3")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": _sqlite_name,
         }
     }
 else:
@@ -124,9 +152,17 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path("/tmp/ilmacader-media") if _on_vercel else (BASE_DIR / "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

@@ -5,3 +5,6 @@ Pillow>=10.0
 xhtml2pdf>=0.2.16
 reportlab>=4.0
 django-widget-tweaks>=1.5
+whitenoise>=6.6
+dj-database-url>=2.1
+gunicorn>=22.0
