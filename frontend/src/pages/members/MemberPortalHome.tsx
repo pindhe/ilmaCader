@@ -27,10 +27,6 @@ export function MemberPortalHome() {
         <h1 className="mt-4 text-4xl font-bold tracking-tight drop-shadow-sm sm:text-5xl">
           Welcome, {name}
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/90 sm:text-lg">
-          You are signed in to the {familyName} workspace. Use the menu above to manage your
-          info, documents, and events.
-        </p>
       </div>
     </section>
   )

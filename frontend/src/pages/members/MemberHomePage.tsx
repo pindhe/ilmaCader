@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, Plus, Trash2, Upload } from 'lucide-react'
+import { Check, ExternalLink, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
-import { createDocument, listDocuments } from '@/api/documents'
+import {
+  createDocument,
+  deleteDocument,
+  listDocuments,
+  updateDocument,
+} from '@/api/documents'
 import { getMyMemberProfile, updateMyMemberProfile } from '@/api/members'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/StateBlocks'
@@ -22,7 +28,20 @@ import { Textarea } from '@/components/ui/textarea'
 import { useFamily, useFamilyId } from '@/hooks/useFamilyId'
 import { cn, formatDate, getErrorMessage } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
-import type { MemberChildInfo, MemberProfileSteps } from '@/types'
+import type { DocumentItem, MemberChildInfo, MemberProfileSteps } from '@/types'
+
+const DOC_CATEGORIES = [
+  { value: 'id', label: 'ID' },
+  { value: 'passport', label: 'Passport' },
+  { value: 'birth_certificate', label: 'Birth certificate' },
+  { value: 'marriage_certificate', label: 'Marriage certificate' },
+  { value: 'education', label: 'Education' },
+  { value: 'medical', label: 'Medical' },
+  { value: 'financial', label: 'Financial' },
+  { value: 'legal', label: 'Legal' },
+  { value: 'property', label: 'Property' },
+  { value: 'other', label: 'Other' },
+]
 
 type StepKey =
   | 'personal'
@@ -120,7 +139,15 @@ export function MemberHomePage() {
   const [docTitle, setDocTitle] = useState('')
   const [docCategory, setDocCategory] = useState('other')
   const [docFile, setDocFile] = useState<File | null>(null)
+  const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null)
   const didInitStep = useRef(false)
+
+  function resetDocForm() {
+    setDocTitle('')
+    setDocCategory('other')
+    setDocFile(null)
+    setEditingDoc(null)
+  }
 
   const indicatorSteps = getIndicatorSteps(marriage.has_spouse ?? null)
   const totalSteps = 6
@@ -302,12 +329,23 @@ export function MemberHomePage() {
       formData.append('title', docTitle)
       formData.append('category', docCategory)
       if (docFile) formData.append('file', docFile)
+      if (editingDoc) return updateDocument(editingDoc.id, formData)
+      if (!docFile) throw new Error('File is required')
       return createDocument(formData)
     },
     onSuccess: () => {
-      toast.success('Document uploaded')
-      setDocTitle('')
-      setDocFile(null)
+      toast.success(editingDoc ? 'Document updated' : 'Document uploaded')
+      resetDocForm()
+      queryClient.invalidateQueries({ queryKey: ['documents', familyId] })
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  })
+
+  const deleteDocMutation = useMutation({
+    mutationFn: (id: string) => deleteDocument(id, familyId!),
+    onSuccess: () => {
+      toast.success('Document removed')
+      if (editingDoc) resetDocForm()
       queryClient.invalidateQueries({ queryKey: ['documents', familyId] })
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -660,70 +698,169 @@ export function MemberHomePage() {
 
             {stepKey === 'documents' ? (
               <div className="space-y-6">
+                <p className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                  Upload a file and it appears in the list below right away. Update or add more
+                  anytime — they also sync to the{' '}
+                  <Link
+                    to="/app/documents"
+                    className="font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    Documents
+                  </Link>{' '}
+                  page.
+                </p>
+
+                {docsQuery.isLoading ? (
+                  <LoadingState label="Loading documents…" />
+                ) : (docsQuery.data?.length ?? 0) > 0 ? (
+                  <ul className="space-y-2">
+                    {docsQuery.data?.map((doc) => (
+                      <li
+                        key={doc.id}
+                        className={cn(
+                          'flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between',
+                          editingDoc?.id === doc.id && 'border-primary bg-primary/5',
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <p className="font-medium">{doc.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(doc.category || 'other').replaceAll('_', ' ')}
+                            {doc.created_at ? ` · ${formatDate(doc.created_at)}` : ''}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="muted">{doc.category || 'file'}</Badge>
+                          {doc.file_url || doc.file ? (
+                            <Button variant="outline" size="sm" asChild>
+                              <a
+                                href={doc.file_url || doc.file}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" /> View
+                              </a>
+                            </Button>
+                          ) : null}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingDoc(doc)
+                              setDocTitle(doc.title || '')
+                              setDocCategory(doc.category || 'other')
+                              setDocFile(null)
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" /> Update
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (confirm(`Remove “${doc.title}”?`)) {
+                                deleteDocMutation.mutate(doc.id)
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No documents yet. Upload your first file below.
+                  </p>
+                )}
+
                 <form
                   className="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 sm:grid-cols-2"
                   onSubmit={(e) => {
                     e.preventDefault()
-                    if (!docTitle.trim() || !docFile) {
-                      toast.error('Title and file are required')
+                    if (!docTitle.trim()) {
+                      toast.error('Title is required')
+                      return
+                    }
+                    if (!editingDoc && !docFile) {
+                      toast.error('Please choose a file')
                       return
                     }
                     uploadMutation.mutate()
                   }}
                 >
+                  <div className="flex items-center justify-between gap-2 sm:col-span-2">
+                    <p className="text-sm font-semibold">
+                      {editingDoc ? `Update: ${editingDoc.title}` : 'Add document'}
+                    </p>
+                    {editingDoc ? (
+                      <Button type="button" variant="ghost" size="sm" onClick={resetDocForm}>
+                        Cancel update
+                      </Button>
+                    ) : null}
+                  </div>
                   <Field label="Document title">
                     <Input
+                      id="my-info-doc-title"
                       required
                       value={docTitle}
                       onChange={(e) => setDocTitle(e.target.value)}
                     />
                   </Field>
                   <Field label="Category">
-                    <Input
-                      value={docCategory}
-                      onChange={(e) => setDocCategory(e.target.value)}
-                      placeholder="id, education, medical…"
-                    />
+                    <Select value={docCategory} onValueChange={setDocCategory}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DOC_CATEGORIES.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </Field>
-                  <Field label="File" className="sm:col-span-2">
+                  <Field
+                    label={editingDoc ? 'Replace file (optional)' : 'File'}
+                    className="sm:col-span-2"
+                  >
                     <Input
                       type="file"
                       onChange={(e) => setDocFile(e.target.files?.[0] || null)}
                     />
                   </Field>
-                  <div className="sm:col-span-2">
+                  <div className="flex flex-wrap gap-2 sm:col-span-2">
                     <Button type="submit" disabled={uploadMutation.isPending}>
-                      <Upload className="h-4 w-4" />
-                      {uploadMutation.isPending ? 'Uploading…' : 'Upload document'}
+                      {editingDoc ? (
+                        <Pencil className="h-4 w-4" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                      {uploadMutation.isPending
+                        ? 'Saving…'
+                        : editingDoc
+                          ? 'Save update'
+                          : 'Upload document'}
                     </Button>
+                    {(docsQuery.data?.length ?? 0) > 0 && !editingDoc ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          resetDocForm()
+                          document.getElementById('my-info-doc-title')?.focus()
+                        }}
+                      >
+                        <Plus className="h-4 w-4" /> Add another
+                      </Button>
+                    ) : null}
                   </div>
                 </form>
-
-                {docsQuery.isLoading ? (
-                  <LoadingState label="Loading documents…" />
-                ) : (docsQuery.data?.length ?? 0) === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No documents yet. Upload one above, or continue to the next step.
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {docsQuery.data?.map((doc) => (
-                      <li
-                        key={doc.id}
-                        className="flex items-center justify-between rounded-lg border border-border px-4 py-3"
-                      >
-                        <div>
-                          <p className="font-medium">{doc.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {doc.category}
-                            {doc.created_at ? ` · ${formatDate(doc.created_at)}` : ''}
-                          </p>
-                        </div>
-                        <Badge variant="muted">{doc.category || 'file'}</Badge>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </div>
             ) : null}
 
@@ -995,3 +1132,4 @@ function YesNoPrompt({
     </div>
   )
 }
+
