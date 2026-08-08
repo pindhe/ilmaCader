@@ -24,9 +24,9 @@ export function LandingPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.08 }}
-            className="mt-6 max-w-2xl text-2xl font-semibold leading-snug text-white/95 sm:text-3xl"
+            className="mt-6 max-w-3xl text-2xl font-semibold leading-snug text-white/95 sm:text-3xl"
           >
-            Keep every generation connected, informed, and financially aligned.
+            Manage Your Family. Protect Your Data. Build Your Future.
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -34,7 +34,7 @@ export function LandingPage() {
             transition={{ duration: 0.55, delay: 0.16 }}
             className="mt-4 max-w-xl text-base text-white/75"
           >
-            Members, tree, finances, documents, and events — one secure workspace for your family.
+            One Family. One Data Center. One Future.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -43,10 +43,10 @@ export function LandingPage() {
             className="mt-8 flex flex-wrap gap-3"
           >
             <Button asChild size="lg" variant="accent">
-              <Link to="/register">Create your family space</Link>
+              <Link to="/register">Get Started</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white">
-              <Link to="/login">Sign in</Link>
+              <Link to="/">Login</Link>
             </Button>
           </motion.div>
         </div>

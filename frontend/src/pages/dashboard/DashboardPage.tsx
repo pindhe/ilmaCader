@@ -159,12 +159,14 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent className="grid gap-2">
             {[
-              ['Members', '/app/members'],
-              ['Income', '/app/finances/income'],
-              ['Expenses', '/app/finances/expenses'],
-              ['Events', '/app/events'],
-              ['Documents', '/app/documents'],
-              ['Tasks', '/app/tasks'],
+              ['Add Family Member', '/app/members'],
+              ['Add Income', '/app/finances/income'],
+              ['Add Expense', '/app/finances/expenses'],
+              ['Add Contribution', '/app/finances/contributions'],
+              ['Create Goal', '/app/finances/goals'],
+              ['Add Event', '/app/events'],
+              ['Upload Document', '/app/documents'],
+              ['Create Task', '/app/tasks'],
             ].map(([label, path]) => (
               <Button key={path} asChild variant="outline" className="justify-start">
                 <Link to={path}>{label}</Link>

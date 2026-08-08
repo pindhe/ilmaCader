@@ -6,7 +6,7 @@ export function LandingLayout() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0B3D91]/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link to="/" className="text-lg font-bold tracking-tight text-white">
+          <Link to="/welcome" className="text-lg font-bold tracking-tight text-white">
             Family Data Center
           </Link>
           <nav className="hidden items-center gap-6 text-sm text-white/80 md:flex">
@@ -16,7 +16,7 @@ export function LandingLayout() {
           </nav>
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
-              <Link to="/login">Sign in</Link>
+              <Link to="/">Sign in</Link>
             </Button>
             <Button asChild variant="accent">
               <Link to="/register">Get started</Link>

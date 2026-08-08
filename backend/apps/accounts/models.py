@@ -9,17 +9,15 @@ from apps.core.models import TimeStampedModel
 
 class User(AbstractUser):
     class Role(models.TextChoices):
-        SUPER_ADMIN = "super_admin", "Super Admin"
-        FAMILY_ADMIN = "family_admin", "Family Admin"
-        FAMILY_MEMBER = "family_member", "Family Member"
-        VIEWER = "viewer", "Viewer"
+        ADMIN = "admin", "Admin"
+        MEMBER = "member", "Member"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=50, blank=True)
     role = models.CharField(
-        max_length=32, choices=Role.choices, default=Role.FAMILY_MEMBER, db_index=True
+        max_length=32, choices=Role.choices, default=Role.MEMBER, db_index=True
     )
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     preferred_language = models.CharField(max_length=10, default="en")

@@ -76,55 +76,6 @@ def record_login(request, user, successful=True):
     )
 
 
-class RegisterView(APIView):
-    permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth"
-
-    @transaction.atomic
-    def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-
-        user = User.objects.create_user(
-            username=data["email"],
-            email=data["email"],
-            password=data["password"],
-            full_name=data["full_name"],
-            phone=data.get("phone", ""),
-            role=User.Role.FAMILY_ADMIN,
-        )
-
-        family = Family.objects.create(
-            name=data["family_name"],
-            created_by=user,
-            email=user.email,
-        )
-        FamilyMembership.objects.create(
-            family=family,
-            user=user,
-            role=FamilyMembership.Role.FAMILY_ADMIN,
-        )
-
-        token = create_email_verification_token(user)
-        send_verification_email(user, token)
-
-        return api_response(
-            True,
-            "Registration successful. Please verify your email.",
-            {
-                "user": UserSerializer(user, context={"request": request}).data,
-                "family": {
-                    "id": str(family.id),
-                    "family_id": family.family_id,
-                    "name": family.name,
-                },
-            },
-            status_code=status.HTTP_201_CREATED,
-        )
-
-
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ScopedRateThrottle]

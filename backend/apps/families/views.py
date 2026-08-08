@@ -83,7 +83,7 @@ class FamilyViewSet(viewsets.ModelViewSet):
         FamilyMembership.objects.get_or_create(
             family=family,
             user=request.user,
-            defaults={"role": FamilyMembership.Role.FAMILY_ADMIN, "is_active": True},
+            defaults={"role": FamilyMembership.Role.ADMIN, "is_active": True},
         )
         log_activity(
             request,

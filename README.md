@@ -1,60 +1,110 @@
-# ilmaCader — Family Data Center
+# Family Data Center
 
-Professional Django website for managing family records securely.
+**One Family. One Data Center. One Future.**
+
+A professional full-stack family management platform for members, finances, documents, events, goals, tasks, and reports.
 
 ## Stack
 
-- Django 5 · Python 3.11+ · PostgreSQL
-- Tailwind CSS · Alpine.js · Chart.js
-- xhtml2pdf for PDF export
+| Layer | Tech |
+|-------|------|
+| Frontend | React, TypeScript, Vite, Tailwind CSS, ShadCN-style UI, Framer Motion, Recharts |
+| Backend | Python, Django 5, Django REST Framework, SimpleJWT |
+| Database | PostgreSQL (production) / SQLite (development) |
 
-## Setup
+## Project structure
 
-1. Create and activate a virtual environment:
+```
+backend/                 # Django REST API
+  apps/
+    accounts/            # Auth, users, admin API
+    families/            # Families, memberships, dashboard stats
+    members/             # Members + relationships + family tree
+    finance/             # Income, expenses, savings, budgets, assets, debts, goals
+    events/              # Events + announcements
+    documents/           # Secure document center
+    tasks/               # Task management + kanban
+    notifications/       # In-app notifications
+    reports/             # Reports, analytics, search, export
+    core/                # Activity logs, permissions, seed command
+frontend/                # React SPA
+```
+
+## Quick start
+
+### 1. Backend
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-2. Copy `.env.example` to `.env` and set database credentials.
-
-3. **Database**
-   - Preferred: PostgreSQL — create DB `ilmacader`, set `USE_SQLITE=False` in `.env`
-   - Temporary fallback: `USE_SQLITE=True` (already set if Postgres is not running yet)
-
-4. Migrate and bootstrap admin:
-
-```powershell
+pip install -r backend\requirements.txt
+copy .env.example .env
+cd backend
 python manage.py migrate
-python manage.py bootstrap_admin
-```
-
-Default admin (change immediately): `admin` / `Admin@12345`
-
-5. Run:
-
-```powershell
+python manage.py seed_demo
 python manage.py runserver
 ```
 
-Open http://127.0.0.1:8000/login/
+API: http://127.0.0.1:8000/api/
 
-## Demo accounts (after bootstrap / initial setup)
+### 2. Frontend
 
-| Username | Password     | Role  |
-|----------|--------------|-------|
-| admin    | Admin@12345  | Admin |
-| demo     | Demo@12345   | User  |
+```powershell
+cd frontend
+npm install
+npm run dev
+```
 
-## Roles
+App: http://127.0.0.1:5173/
 
-- **Administrator** — full access (`/admin-dashboard/`)
-- **User** — own data only (`/dashboard/`)
+## Demo accounts
 
-Users cannot self-register. Admins create all accounts under **Users**.
+| Email | Password | Role |
+|-------|----------|------|
+| `admin@familydatacenter.local` | `Admin@12345` | Super Admin |
+| `hassan@demo.local` | `Demo@12345` | Family Admin (Hassan Family) |
+| `amina@demo.local` | `Demo@12345` | Family Member |
 
-## Note on Python version
+Demo family ID example: `FAM-2026-00001`
 
-Target was Python 3.13; this environment uses **Python 3.11** with Django 5.2, which is fully supported.
+## Environment
+
+Copy `.env.example` to `.env`. Important keys:
+
+- `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`
+- `USE_SQLITE=True` for local SQLite, or `False` + `DATABASE_URL` for PostgreSQL
+- `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL`
+- Email settings (console backend by default)
+- Optional JWT / storage credentials
+
+Never commit real secrets.
+
+## Main features
+
+- JWT auth with refresh tokens, email verification, password reset
+- Roles: Super Admin, Family Admin, Family Member, Viewer
+- Family members + interactive relationship tree
+- Income, expenses, contributions, savings, budgets, assets, debts, goals
+- Events, announcements, documents, tasks (list + kanban)
+- Notifications, activity logs, global search (Ctrl+K)
+- Reports / analytics with CSV & Excel export
+- Dark mode, responsive dashboard, landing page
+
+## API overview
+
+- `/api/auth/`
+- `/api/families/`
+- `/api/members/`
+- `/api/income/` `/api/expenses/` `/api/contributions/` `/api/savings/`
+- `/api/budgets/` `/api/assets/` `/api/debts/` `/api/goals/`
+- `/api/events/` `/api/announcements/` `/api/documents/` `/api/tasks/`
+- `/api/notifications/` `/api/reports/` `/api/analytics/` `/api/search/`
+- `/api/activity/` `/api/admin/`
+
+## Production notes
+
+- Set `DEBUG=False`, strong `SECRET_KEY`, and PostgreSQL
+- Serve behind HTTPS
+- Configure real email SMTP
+- Put media on object storage when needed
+- Run migrations and collectstatic as part of deploy

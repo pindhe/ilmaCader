@@ -10,7 +10,6 @@ import { LandingLayout } from '@/layouts/LandingLayout'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
-import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { ActivityLogsPage } from '@/pages/activity/ActivityLogsPage'
@@ -65,15 +64,17 @@ export default function App() {
         <BrowserRouter>
           <AuthHydrator>
             <Routes>
-              <Route element={<LandingLayout />}>
-                <Route index element={<LandingPage />} />
-              </Route>
+              <Route index element={<LoginPage />} />
+              <Route path="login" element={<LoginPage />} />
 
               <Route element={<AuthLayout />}>
-                <Route path="login" element={<LoginPage />} />
-                <Route path="register" element={<RegisterPage />} />
                 <Route path="forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="reset-password" element={<ResetPasswordPage />} />
+              </Route>
+              <Route path="register" element={<Navigate to="/" replace />} />
+
+              <Route element={<LandingLayout />}>
+                <Route path="welcome" element={<LandingPage />} />
               </Route>
 
               <Route path="app" element={<ProtectedRoute />}>

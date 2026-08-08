@@ -4,41 +4,61 @@ from apps.families.models import FamilyMembership
 
 
 ROLE_RANK = {
-    "viewer": 1,
-    "family_member": 2,
-    "family_admin": 3,
-    "super_admin": 4,
+    "member": 1,
+    "admin": 2,
 }
+
+ROLE_ALIASES = {
+    "viewer": "member",
+    "family_member": "member",
+    "family_admin": "admin",
+    "super_admin": "admin",
+}
+
+
+def normalize_role(role):
+    if not role:
+        return "member"
+    return ROLE_ALIASES.get(role, role)
 
 
 def get_membership(user, family_id):
     if not user or not user.is_authenticated:
         return None
-    if getattr(user, "role", None) == "super_admin" or user.is_superuser:
-        return type("M", (), {"role": "super_admin", "is_active": True})()
-    return (
-        FamilyMembership.objects.filter(
-            user=user, family_id=family_id, is_active=True
-        )
+    membership = (
+        FamilyMembership.objects.filter(user=user, family_id=family_id, is_active=True)
         .select_related("family")
         .first()
     )
+    if membership:
+        return membership
+    if user.is_superuser:
+        return type("M", (), {"role": "admin", "is_active": True})()
+    return None
 
 
 def user_has_min_role(user, family_id, min_role):
     membership = get_membership(user, family_id)
     if not membership:
         return False
-    return ROLE_RANK.get(membership.role, 0) >= ROLE_RANK.get(min_role, 0)
+    user_role = normalize_role(membership.role)
+    required = normalize_role(min_role)
+    return ROLE_RANK.get(user_role, 0) >= ROLE_RANK.get(required, 0)
+
+
+def is_admin_user(user, family_id=None):
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    if family_id:
+        return user_has_min_role(user, family_id, "admin")
+    return normalize_role(getattr(user, "role", None)) == "admin"
 
 
 class IsSuperAdmin(BasePermission):
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and (request.user.role == "super_admin" or request.user.is_superuser)
-        )
+        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
 
 
 class IsFamilyAdmin(BasePermission):
@@ -49,8 +69,8 @@ class IsFamilyAdmin(BasePermission):
             or request.data.get("family")
         )
         if not family_id:
-            return request.user.is_authenticated
-        return user_has_min_role(request.user, family_id, "family_admin")
+            return is_admin_user(request.user)
+        return user_has_min_role(request.user, family_id, "admin")
 
 
 class IsFamilyMember(BasePermission):
@@ -62,7 +82,7 @@ class IsFamilyMember(BasePermission):
         )
         if not family_id:
             return request.user.is_authenticated
-        return user_has_min_role(request.user, family_id, "family_member")
+        return user_has_min_role(request.user, family_id, "member")
 
 
 class ReadOnlyOrFamilyAdmin(BasePermission):
@@ -75,5 +95,5 @@ class ReadOnlyOrFamilyAdmin(BasePermission):
         if not family_id:
             return request.user.is_authenticated
         if request.method in SAFE_METHODS:
-            return user_has_min_role(request.user, family_id, "viewer")
-        return user_has_min_role(request.user, family_id, "family_admin")
+            return user_has_min_role(request.user, family_id, "member")
+        return user_has_min_role(request.user, family_id, "admin")

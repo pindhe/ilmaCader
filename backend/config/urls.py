@@ -20,9 +20,14 @@ from apps.finance.urls import (
 )
 from apps.reports.urls import analytics_urlpatterns, search_urlpatterns
 
+from apps.accounts.admin_api import AdminFamiliesView, AdminStatsView, AdminUsersView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("apps.accounts.urls")),
+    path("api/admin/stats/", AdminStatsView.as_view(), name="admin-stats"),
+    path("api/admin/users/", AdminUsersView.as_view(), name="admin-users"),
+    path("api/admin/families/", AdminFamiliesView.as_view(), name="admin-families"),
     path("api/families/", include("apps.families.urls")),
     path("api/members/", include("apps.members.urls")),
     path("api/income/", include((income_urlpatterns, "income"))),

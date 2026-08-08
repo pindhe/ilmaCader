@@ -52,9 +52,10 @@ class FamilyMemberViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.M
         if not user_has_min_role(request.user, family_id, "family_admin"):
             return api_response(False, "Permission denied.", status_code=status.HTTP_403_FORBIDDEN)
 
+        family = get_object_or_404(Family, id=family_id)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        member = serializer.save(family_id=family_id)
+        member = serializer.save(family=family)
         log_activity(
             request,
             "Created family member",

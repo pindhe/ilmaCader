@@ -22,6 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
             "email_verified",
             "is_suspended",
             "two_factor_enabled",
+            "is_superuser",
             "date_joined",
             "last_login",
         )

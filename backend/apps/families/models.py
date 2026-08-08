@@ -63,16 +63,15 @@ class Family(TimeStampedModel, SoftDeleteModel):
 
 class FamilyMembership(TimeStampedModel):
     class Role(models.TextChoices):
-        FAMILY_ADMIN = "family_admin", "Family Admin"
-        FAMILY_MEMBER = "family_member", "Family Member"
-        VIEWER = "viewer", "Viewer"
+        ADMIN = "admin", "Admin"
+        MEMBER = "member", "Member"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     family = models.ForeignKey(Family, on_delete=models.CASCADE, related_name="memberships")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memberships"
     )
-    role = models.CharField(max_length=32, choices=Role.choices, default=Role.FAMILY_MEMBER)
+    role = models.CharField(max_length=32, choices=Role.choices, default=Role.MEMBER)
     is_active = models.BooleanField(default=True)
 
     class Meta:
