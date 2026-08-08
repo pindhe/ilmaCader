@@ -51,5 +51,5 @@ urlpatterns = [
     path("api/settings/", include((settings_urlpatterns, "settings"))),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve uploaded media (on Render free disk is ephemeral — use S3 later for permanence)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
