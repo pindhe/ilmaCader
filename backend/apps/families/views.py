@@ -19,8 +19,12 @@ from apps.families.serializers import (
     FamilyProfileSerializer,
     FamilySerializer,
 )
-from apps.finance.models import Asset, Expense, FinancialGoal, Income, SavingGoal
+from apps.core.models import ActivityLog
+from apps.documents.models import Document
+from apps.events.models import Announcement, Event
+from apps.finance.models import Asset, Contribution, Debt, Expense, FinancialGoal, Income, SavingGoal
 from apps.members.models import FamilyMember, Relationship
+from apps.tasks.models import Task
 
 
 def api_response(success, message, data=None, status_code=status.HTTP_200_OK, errors=None):
@@ -285,18 +289,88 @@ class DashboardStatsView(APIView):
         active_goals = FinancialGoal.objects.filter(
             family=family, is_deleted=False, status=FinancialGoal.Status.ACTIVE
         ).count()
+        debts = (
+            Debt.objects.filter(
+                family=family, is_deleted=False, status=Debt.Status.ACTIVE
+            )
+            .aggregate(total=Sum("remaining_balance"))
+            .get("total")
+            or Decimal("0")
+        )
+        contributions = (
+            Contribution.objects.filter(
+                family=family, is_deleted=False, date__gte=start, date__lte=end
+            )
+            .aggregate(total=Sum("amount"))
+            .get("total")
+            or Decimal("0")
+        )
+        pending_tasks = Task.objects.filter(
+            family=family,
+            is_deleted=False,
+            status__in=[Task.Status.PENDING, Task.Status.IN_PROGRESS],
+        ).count()
+        upcoming_events = Event.objects.filter(
+            family=family, is_deleted=False, date__gte=timezone.now().date()
+        ).count()
+        documents_count = Document.objects.filter(family=family, is_deleted=False).count()
+        announcements_count = Announcement.objects.filter(
+            family=family, is_deleted=False, is_published=True
+        ).count()
+        net_cashflow = monthly_income - monthly_expenses
+        net_worth = assets - debts
+
+        recent_activity = list(
+            ActivityLog.objects.filter(family=family)
+            .select_related("user")
+            .order_by("-created_at")[:8]
+            .values("id", "action", "module", "created_at", "user__full_name")
+        )
+        recent_tasks = list(
+            Task.objects.filter(family=family, is_deleted=False)
+            .select_related("assigned_member")
+            .order_by("due_date", "-created_at")[:6]
+            .values(
+                "id",
+                "title",
+                "status",
+                "priority",
+                "due_date",
+                "assigned_member__full_name",
+            )
+        )
+        upcoming_events_list = list(
+            Event.objects.filter(
+                family=family, is_deleted=False, date__gte=timezone.now().date()
+            )
+            .order_by("date", "time")[:6]
+            .values("id", "name", "event_type", "date", "location")
+        )
 
         return api_response(
             True,
             "Dashboard stats retrieved.",
             {
                 "family_id": str(family.id),
+                "family_name": family.name,
+                "family_code": family.family_id,
                 "member_count": member_count,
                 "monthly_income": monthly_income,
                 "monthly_expenses": monthly_expenses,
+                "monthly_contributions": contributions,
                 "savings": savings,
                 "assets": assets,
+                "debts": debts,
+                "net_cashflow": net_cashflow,
+                "net_worth": net_worth,
                 "active_goals": active_goals,
+                "pending_tasks": pending_tasks,
+                "upcoming_events": upcoming_events,
+                "documents_count": documents_count,
+                "announcements_count": announcements_count,
+                "recent_activity": recent_activity,
+                "recent_tasks": recent_tasks,
+                "upcoming_events_list": upcoming_events_list,
             },
         )
 

@@ -94,12 +94,44 @@ export interface Relationship {
 
 export interface DashboardStats {
   family_id: string
+  family_name?: string
+  family_code?: string
   member_count: number
   monthly_income: number | string
   monthly_expenses: number | string
+  monthly_contributions?: number | string
   savings: number | string
   assets: number | string
+  debts?: number | string
+  net_cashflow?: number | string
+  net_worth?: number | string
   active_goals: number
+  pending_tasks?: number
+  upcoming_events?: number
+  documents_count?: number
+  announcements_count?: number
+  recent_activity?: Array<{
+    id: string
+    action: string
+    module?: string
+    created_at: string
+    user__full_name?: string | null
+  }>
+  recent_tasks?: Array<{
+    id: string
+    title: string
+    status?: string
+    priority?: string
+    due_date?: string | null
+    assigned_member__full_name?: string | null
+  }>
+  upcoming_events_list?: Array<{
+    id: string
+    name: string
+    event_type?: string
+    date: string
+    location?: string
+  }>
 }
 
 export interface Income {

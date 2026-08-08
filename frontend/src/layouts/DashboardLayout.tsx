@@ -198,6 +198,12 @@ export function DashboardLayout() {
               </p>
             </div>
 
+            <Badge
+              variant={isAdmin ? 'default' : 'muted'}
+              className="hidden sm:inline-flex"
+            >
+              {isAdmin ? 'Admin' : 'Member'}
+            </Badge>
             {isAdmin ? (
               <>
                 <Button
@@ -213,11 +219,7 @@ export function DashboardLayout() {
                   <Search className="h-5 w-5" />
                 </Button>
               </>
-            ) : (
-              <Badge variant="muted" className="hidden sm:inline-flex">
-                Member
-              </Badge>
-            )}
+            ) : null}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
