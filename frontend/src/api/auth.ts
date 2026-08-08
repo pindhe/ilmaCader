@@ -36,20 +36,6 @@ export async function updateMe(payload: Partial<User>) {
   return unwrapData<User>(data)
 }
 
-export async function requestPasswordReset(email: string) {
-  const { data } = await api.post('/auth/password-reset/', { email })
-  return unwrapData(data)
-}
-
-export async function confirmPasswordReset(payload: {
-  token: string
-  password: string
-  confirm_password: string
-}) {
-  const { data } = await api.post('/auth/password-reset/confirm/', payload)
-  return unwrapData(data)
-}
-
 export async function changePassword(payload: {
   current_password: string
   new_password: string

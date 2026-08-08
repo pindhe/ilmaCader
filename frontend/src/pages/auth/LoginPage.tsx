@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import loginBg from '@/assets/WhatsApp Image 2026-07-26 at 14.23.39.jpeg'
@@ -72,17 +72,9 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-white">
-                Password
-              </Label>
-              <Link
-                to="/forgot-password"
-                className="text-xs font-medium text-white/85 hover:text-white hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
+            <Label htmlFor="password" className="text-white">
+              Password
+            </Label>
             <Input
               id="password"
               type="password"

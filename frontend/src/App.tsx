@@ -5,13 +5,10 @@ import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
 import { AdminRoute } from '@/components/auth/AdminRoute'
 import { ProtectedRoute, SuperAdminRoute } from '@/components/auth/ProtectedRoute'
-import { AuthLayout } from '@/layouts/AuthLayout'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { LandingLayout } from '@/layouts/LandingLayout'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
-import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
-import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { ActivityLogsPage } from '@/pages/activity/ActivityLogsPage'
 import { RoleHomePage } from '@/pages/dashboard/RoleHomePage'
@@ -68,10 +65,8 @@ export default function App() {
               <Route index element={<LoginPage />} />
               <Route path="login" element={<LoginPage />} />
 
-              <Route element={<AuthLayout />}>
-                <Route path="forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="reset-password" element={<ResetPasswordPage />} />
-              </Route>
+              <Route path="forgot-password" element={<Navigate to="/" replace />} />
+              <Route path="reset-password" element={<Navigate to="/" replace />} />
               <Route path="register" element={<Navigate to="/" replace />} />
 
               <Route element={<LandingLayout />}>
