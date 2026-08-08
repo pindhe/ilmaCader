@@ -1,4 +1,5 @@
 import homeBg from '@/assets/WhatsApp Image 2026-07-26 at 14.23.39.jpeg'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 import { useFamily } from '@/hooks/useFamilyId'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -21,7 +22,8 @@ export function MemberPortalHome() {
       />
 
       <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-6 py-20 text-center text-white">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-white/85">
+        <BrandLogo to={undefined} size="xl" showText={false} className="justify-center" />
+        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.22em] text-white/85">
           {familyName}
         </p>
         <h1 className="mt-4 text-4xl font-bold tracking-tight drop-shadow-sm sm:text-5xl">

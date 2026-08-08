@@ -2,6 +2,7 @@ from django.urls import path
 
 from apps.accounts.views import (
     ChangePasswordView,
+    CreateAdminView,
     LoginHistoryView,
     LoginView,
     LogoutView,
@@ -30,4 +31,5 @@ urlpatterns = [
     ),
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("login-history/", LoginHistoryView.as_view(), name="login-history"),
+    path("create-admin/", CreateAdminView.as_view(), name="create-admin"),
 ]

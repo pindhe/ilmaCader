@@ -27,7 +27,7 @@ export function LandingPage() {
             transition={{ duration: 0.5, delay: 0.05 }}
             className="text-4xl font-extrabold tracking-tight sm:text-6xl"
           >
-            Family Data Center
+            IlmaCader
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 16 }}

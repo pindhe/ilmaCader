@@ -220,7 +220,7 @@ export function MemberLayout() {
             </div>
             <div className="flex flex-col gap-1 sm:items-end">
               <p className="text-xs font-medium text-foreground/80">
-                © {new Date().getFullYear()} Family Data Center
+                © {new Date().getFullYear()} IlmaCader
               </p>
               <p className="text-xs">{family?.name || 'Member portal'}</p>
             </div>

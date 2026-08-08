@@ -42,7 +42,7 @@ print("admin as family admin", r4.status_code)
 
 r5 = c.post(
     "/api/auth/login/",
-    data=json.dumps({"email": "admin@familydatacenter.local", "password": "Admin@12345"}),
+    data=json.dumps({"email": "admin@ilmacader.local", "password": "Admin@12345"}),
     content_type="application/json",
 )
 admin_token = r5.json()["data"]["tokens"]["access"]

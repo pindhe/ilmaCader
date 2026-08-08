@@ -27,7 +27,7 @@ export function LandingLayout() {
       <footer className="border-t border-border bg-card">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <BrandLogo to="/" size="sm" textClassName="text-sm text-foreground" />
-          <p>© {new Date().getFullYear()} Family Data Center</p>
+          <p>© {new Date().getFullYear()} IlmaCader</p>
         </div>
       </footer>
     </div>

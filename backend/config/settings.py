@@ -171,7 +171,7 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env(
     "DEFAULT_FROM_EMAIL",
-    default="Family Data Center <noreply@familydatacenter.local>",
+    default="IlmaCader <noreply@ilmacader.local>",
 )
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024

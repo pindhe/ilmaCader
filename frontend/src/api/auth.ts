@@ -49,3 +49,17 @@ export async function getLoginHistory() {
   const { data } = await api.get('/auth/login-history/')
   return unwrapData(data)
 }
+
+export async function createAdminAccount(payload: {
+  email: string
+  password: string
+  confirm_password?: string
+  full_name?: string
+  family?: string
+}) {
+  const { data } = await api.post('/auth/create-admin/', {
+    ...payload,
+    confirm_password: payload.confirm_password ?? payload.password,
+  })
+  return unwrapData<{ email: string }>(data)
+}

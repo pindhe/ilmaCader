@@ -18,6 +18,7 @@ const SIZE = {
   xl: 'h-20 w-20',
 }
 
+/** Shared IlmaCader mark — always uses src/assets/logo.png */
 export function BrandLogo({
   to = '/',
   size = 'md',
@@ -30,13 +31,15 @@ export function BrandLogo({
     <>
       <img
         src={logo}
-        alt="Family Data Center logo"
-        className={cn('shrink-0 object-contain', SIZE[size], imgClassName)}
+        alt="IlmaCader"
+        className={cn(
+          'shrink-0 rounded-md object-contain',
+          SIZE[size],
+          imgClassName,
+        )}
       />
       {showText ? (
-        <span className={cn('font-bold tracking-tight', textClassName)}>
-          Family Data Center
-        </span>
+        <span className={cn('font-bold tracking-tight', textClassName)}>IlmaCader</span>
       ) : null}
     </>
   )

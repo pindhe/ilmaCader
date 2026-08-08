@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { UserPlus, Users, HeartHandshake } from 'lucide-react'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { useFamily } from '@/hooks/useFamilyId'
@@ -34,10 +35,13 @@ export function AdminHomePage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title={`Welcome, ${firstName}`}
-        description={`${family?.name || 'Family'} · Admin workspace`}
-      />
+      <div className="flex items-center gap-4">
+        <BrandLogo to={undefined} size="lg" showText={false} />
+        <PageHeader
+          title={`Welcome, ${firstName}`}
+          description={`${family?.name || 'Family'} · IlmaCader admin`}
+        />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         {ACTIONS.map((item) => {

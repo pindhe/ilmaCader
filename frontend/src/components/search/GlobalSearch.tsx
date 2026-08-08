@@ -68,7 +68,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
       <DialogContent className="max-w-xl gap-0 overflow-hidden p-0">
         <DialogHeader className="border-b border-border px-4 py-3">
           <DialogTitle className="sr-only">Search</DialogTitle>
-          <DialogDescription className="sr-only">Jump to any page in Family Data Center</DialogDescription>
+          <DialogDescription className="sr-only">Jump to any page in IlmaCader</DialogDescription>
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input

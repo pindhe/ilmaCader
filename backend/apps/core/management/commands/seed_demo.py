@@ -25,14 +25,14 @@ from apps.tasks.models import Task
 
 
 class Command(BaseCommand):
-    help = "Seed Hassan Family demo data for Family Data Center"
+    help = "Seed Hassan Family demo data for IlmaCader"
 
     @transaction.atomic
     def handle(self, *args, **options):
         admin, _ = User.objects.update_or_create(
-            email="admin@familydatacenter.local",
+            email="admin@ilmacader.local",
             defaults={
-                "username": "admin@familydatacenter.local",
+                "username": "admin@ilmacader.local",
                 "full_name": "Platform Admin",
                 "role": User.Role.ADMIN,
                 "email_verified": True,
@@ -406,7 +406,7 @@ class Command(BaseCommand):
             Notification.objects.create(
                 family=family,
                 user=user,
-                title="Welcome to Family Data Center",
+                title="Welcome to IlmaCader",
                 message="Your Hassan Family workspace is ready with demo data.",
                 notification_type=Notification.NotificationType.SYSTEM,
                 link="/app/dashboard",
@@ -423,6 +423,6 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Demo data seeded successfully."))
         self.stdout.write(f"Family: {family.name} ({family.family_id})")
         self.stdout.write("Accounts:")
-        self.stdout.write("  admin@familydatacenter.local / Admin@12345 (Admin)")
+        self.stdout.write("  admin@ilmacader.local / Admin@12345 (Admin)")
         self.stdout.write("  hassan@demo.local / Demo@12345 (Admin)")
         self.stdout.write("  amina@demo.local / Demo@12345 (Member)")
