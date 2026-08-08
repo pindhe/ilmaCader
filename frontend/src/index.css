@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: #f5f7fa;
+  --color-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0f172a;
+  --color-primary: #0b3d91;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #059669;
+  --color-secondary-foreground: #ffffff;
+  --color-accent: #d4a017;
+  --color-accent-foreground: #1a1300;
+  --color-muted: #e8eef5;
+  --color-muted-foreground: #64748b;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #dbe3ee;
+  --color-input: #dbe3ee;
+  --color-ring: #0b3d91;
+  --color-sidebar: #0a2f70;
+  --color-sidebar-foreground: #e8eef5;
+  --color-sidebar-accent: #0d4aaa;
+  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+
+  --radius-xl: 0.75rem;
+  --radius-lg: 0.625rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.375rem;
+}
+
+.dark {
+  --color-background: #0b1220;
+  --color-foreground: #e8eef5;
+  --color-card: #121a2b;
+  --color-card-foreground: #e8eef5;
+  --color-popover: #121a2b;
+  --color-popover-foreground: #e8eef5;
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #10b981;
+  --color-secondary-foreground: #042f1f;
+  --color-accent: #e4b423;
+  --color-accent-foreground: #1a1300;
+  --color-muted: #1a2438;
+  --color-muted-foreground: #94a3b8;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #243049;
+  --color-input: #243049;
+  --color-ring: #3b82f6;
+  --color-sidebar: #07101f;
+  --color-sidebar-foreground: #e8eef5;
+  --color-sidebar-accent: #122038;
+  --color-sidebar-border: rgba(255, 255, 255, 0.06);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(11, 61, 145, 0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(5, 150, 105, 0.06), transparent);
+    min-height: 100vh;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(59, 130, 246, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(16, 185, 129, 0.08), transparent);
+  }
+}
+
+@layer utilities {
+  .card-surface {
+    @apply rounded-xl border border-border bg-card text-card-foreground shadow-sm;
+  }
+}

@@ -1,8 +1,0 @@
-{% load static %}
-{% if site_settings and site_settings.logo %}
-  <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ilmaCader' }}" class="brand-logo {{ logo_class|default:'' }}">
-{% elif MEDIA_URL %}
-  <img src="{{ MEDIA_URL }}logo.jpg" alt="ilmaCader" class="brand-logo {{ logo_class|default:'' }}" onerror="this.onerror=null;this.src='{% static 'img/logo.jpg' %}';">
-{% else %}
-  <img src="{% static 'img/logo.jpg' %}" alt="ilmaCader" class="brand-logo {{ logo_class|default:'' }}">
-{% endif %}
