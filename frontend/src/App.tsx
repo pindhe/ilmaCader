@@ -76,25 +76,27 @@ export default function App() {
               <Route path="app" element={<ProtectedRoute />}>
                 <Route element={<DashboardLayout />}>
                   <Route index element={<RoleHomePage />} />
+                  {/* Members enter their own data; admin sees all */}
+                  <Route path="finances/income" element={<IncomePage />} />
+                  <Route path="finances/expenses" element={<ExpensesPage />} />
+                  <Route path="finances/contributions" element={<ContributionsPage />} />
+                  <Route path="documents" element={<DocumentsPage />} />
                   <Route path="tasks" element={<TasksPage />} />
                   <Route path="events" element={<EventsPage />} />
                   <Route path="announcements" element={<AnnouncementsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
 
+                  {/* Admin-only management */}
                   <Route element={<AdminRoute />}>
                     <Route path="members" element={<MembersPage />} />
                     <Route path="members/:id" element={<MemberDetailPage />} />
                     <Route path="family-tree" element={<FamilyTreePage />} />
                     <Route path="finances" element={<FinancesHubPage />} />
-                    <Route path="finances/income" element={<IncomePage />} />
-                    <Route path="finances/expenses" element={<ExpensesPage />} />
-                    <Route path="finances/contributions" element={<ContributionsPage />} />
                     <Route path="finances/savings" element={<SavingsPage />} />
                     <Route path="finances/budget" element={<BudgetPage />} />
                     <Route path="finances/assets" element={<AssetsPage />} />
                     <Route path="finances/debts" element={<DebtsPage />} />
                     <Route path="finances/goals" element={<GoalsPage />} />
-                    <Route path="documents" element={<DocumentsPage />} />
                     <Route path="reports" element={<ReportsPage />} />
                     <Route path="activity" element={<ActivityLogsPage />} />
                     <Route path="family" element={<FamilyProfilePage />} />

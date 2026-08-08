@@ -68,6 +68,10 @@ const ADMIN_NAV = [
 
 const MEMBER_NAV = [
   { to: '/app', label: 'My Information', icon: LayoutDashboard, end: true },
+  { to: '/app/finances/income', label: 'My Income', icon: TrendingUp },
+  { to: '/app/finances/expenses', label: 'My Expenses', icon: Receipt },
+  { to: '/app/finances/contributions', label: 'My Contributions', icon: Landmark },
+  { to: '/app/documents', label: 'My Documents', icon: FileText },
   { to: '/app/tasks', label: 'My Tasks', icon: FolderKanban },
   { to: '/app/events', label: 'Events', icon: Calendar },
   { to: '/app/announcements', label: 'Announcements', icon: Megaphone },

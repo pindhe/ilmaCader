@@ -11,8 +11,11 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+from rest_framework.exceptions import PermissionDenied
+
 from apps.core.mixins import FamilyScopedQuerysetMixin, SoftDeleteMixin
-from apps.core.permissions import ReadOnlyOrFamilyAdmin, user_has_min_role
+from apps.core.ownership import attach_owner_on_create, scope_to_own_member
+from apps.core.permissions import IsFamilyContributor, ReadOnlyOrFamilyAdmin, user_has_min_role
 from apps.core.utils import api_response, notify_family_members
 from apps.families.models import Family
 from apps.finance.models import (
@@ -40,15 +43,24 @@ from apps.finance.serializers import (
 class IncomeViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Income.objects.select_related("family", "person", "created_by")
     serializer_class = IncomeSerializer
-    permission_classes = [IsAuthenticated, ReadOnlyOrFamilyAdmin]
+    permission_classes = [IsAuthenticated, IsFamilyContributor]
     require_role = "viewer"
     filterset_fields = ["family", "category", "currency", "person", "date"]
     search_fields = ["title", "source", "description"]
     ordering_fields = ["date", "amount", "created_at", "title"]
     ordering = ["-date", "-created_at"]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return scope_to_own_member(qs, self.request.user, self.get_family_id(), "person")
+
     def perform_create(self, serializer):
-        instance = super().perform_create(serializer)
+        try:
+            instance = attach_owner_on_create(
+                serializer, self.request.user, self.get_family_id(), "person"
+            )
+        except PermissionError as exc:
+            raise PermissionDenied(str(exc)) from exc
         notify_family_members(
             instance.family,
             "New income recorded",
@@ -63,15 +75,24 @@ class IncomeViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.ModelVi
 class ExpenseViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Expense.objects.select_related("family", "paid_by", "created_by")
     serializer_class = ExpenseSerializer
-    permission_classes = [IsAuthenticated, ReadOnlyOrFamilyAdmin]
+    permission_classes = [IsAuthenticated, IsFamilyContributor]
     require_role = "viewer"
     filterset_fields = ["family", "category", "currency", "paid_by", "date"]
     search_fields = ["title", "description"]
     ordering_fields = ["date", "amount", "created_at", "title"]
     ordering = ["-date", "-created_at"]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return scope_to_own_member(qs, self.request.user, self.get_family_id(), "paid_by")
+
     def perform_create(self, serializer):
-        instance = super().perform_create(serializer)
+        try:
+            instance = attach_owner_on_create(
+                serializer, self.request.user, self.get_family_id(), "paid_by"
+            )
+        except PermissionError as exc:
+            raise PermissionDenied(str(exc)) from exc
         notify_family_members(
             instance.family,
             "New expense recorded",
@@ -86,15 +107,24 @@ class ExpenseViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.ModelV
 class ContributionViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Contribution.objects.select_related("family", "member", "created_by")
     serializer_class = ContributionSerializer
-    permission_classes = [IsAuthenticated, ReadOnlyOrFamilyAdmin]
+    permission_classes = [IsAuthenticated, IsFamilyContributor]
     require_role = "viewer"
     filterset_fields = ["family", "member", "payment_method", "contribution_type", "date"]
     search_fields = ["purpose", "reference_number", "notes", "contribution_type"]
     ordering_fields = ["date", "amount", "created_at"]
     ordering = ["-date", "-created_at"]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return scope_to_own_member(qs, self.request.user, self.get_family_id(), "member")
+
     def perform_create(self, serializer):
-        instance = super().perform_create(serializer)
+        try:
+            instance = attach_owner_on_create(
+                serializer, self.request.user, self.get_family_id(), "member"
+            )
+        except PermissionError as exc:
+            raise PermissionDenied(str(exc)) from exc
         notify_family_members(
             instance.family,
             "New contribution recorded",

@@ -1,13 +1,19 @@
 import { createExpense, listExpenses } from '@/api/finance'
 import { ResourceListPage } from '@/features/finance/ResourceListPage'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Expense } from '@/types'
 
 export function ExpensesPage() {
+  const isAdmin = useIsAdmin()
   return (
     <ResourceListPage<Expense>
-      title="Expenses"
-      description="Track household spending by category"
+      title={isAdmin ? 'Expenses' : 'My Expenses'}
+      description={
+        isAdmin
+          ? 'All family expenses (full admin view)'
+          : 'Enter and track your own expenses — admin can see it'
+      }
       queryKey="expenses"
       queryFn={listExpenses}
       createLabel="Add expense"

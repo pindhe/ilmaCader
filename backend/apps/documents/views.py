@@ -6,7 +6,8 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from apps.core.mixins import FamilyScopedQuerysetMixin, SoftDeleteMixin
-from apps.core.permissions import ReadOnlyOrFamilyAdmin, user_has_min_role
+from apps.core.ownership import get_user_member, scope_to_own_member
+from apps.core.permissions import IsFamilyContributor, user_has_min_role
 from apps.core.utils import api_response, log_activity, notify_family_members
 from apps.documents.models import Document
 from apps.documents.serializers import DocumentSerializer
@@ -15,7 +16,7 @@ from apps.documents.serializers import DocumentSerializer
 class DocumentViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = Document.objects.select_related("family", "member", "uploaded_by")
     serializer_class = DocumentSerializer
-    permission_classes = [IsAuthenticated, ReadOnlyOrFamilyAdmin]
+    permission_classes = [IsAuthenticated, IsFamilyContributor]
     require_role = "viewer"
     filterset_fields = ["category", "member", "family"]
     search_fields = ["title", "notes", "category", "member__full_name"]
@@ -24,6 +25,7 @@ class DocumentViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.Model
 
     def get_queryset(self):
         qs = super().get_queryset()
+        qs = scope_to_own_member(qs, self.request.user, self.get_family_id(), "member")
         status_param = self.request.query_params.get("status")
         if status_param:
             today = timezone.now().date()
@@ -60,7 +62,19 @@ class DocumentViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.Model
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        document = serializer.save(family_id=family_id, uploaded_by=request.user)
+        member = get_user_member(request.user, family_id)
+        save_kwargs = {"family_id": family_id, "uploaded_by": request.user}
+        if not user_has_min_role(request.user, family_id, "admin"):
+            if not member:
+                return api_response(
+                    False,
+                    "No member profile linked to this account.",
+                    status_code=status.HTTP_403_FORBIDDEN,
+                )
+            save_kwargs["member"] = member
+        elif member and not request.data.get("member"):
+            save_kwargs["member"] = member
+        document = serializer.save(**save_kwargs)
         log_activity(
             request,
             "Uploaded document",

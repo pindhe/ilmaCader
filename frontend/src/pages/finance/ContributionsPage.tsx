@@ -1,13 +1,19 @@
 import { createContribution, listContributions } from '@/api/finance'
 import { ResourceListPage } from '@/features/finance/ResourceListPage'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Contribution } from '@/types'
 
 export function ContributionsPage() {
+  const isAdmin = useIsAdmin()
   return (
     <ResourceListPage<Contribution>
-      title="Contributions"
-      description="Member contributions and dues"
+      title={isAdmin ? 'Contributions' : 'My Contributions'}
+      description={
+        isAdmin
+          ? 'All family contributions (full admin view)'
+          : 'Record your contributions — admin can see them'
+      }
       queryKey="contributions"
       queryFn={listContributions}
       createLabel="Add contribution"

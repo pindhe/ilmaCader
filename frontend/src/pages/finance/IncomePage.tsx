@@ -1,13 +1,19 @@
 import { createIncome, listIncome } from '@/api/finance'
 import { ResourceListPage } from '@/features/finance/ResourceListPage'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Income } from '@/types'
 
 export function IncomePage() {
+  const isAdmin = useIsAdmin()
   return (
     <ResourceListPage<Income>
-      title="Income"
-      description="Record family earnings and revenue sources"
+      title={isAdmin ? 'Income' : 'My Income'}
+      description={
+        isAdmin
+          ? 'All family income records (full admin view)'
+          : 'Enter and track your own income — admin can see it'
+      }
       queryKey="income"
       queryFn={listIncome}
       createLabel="Add income"

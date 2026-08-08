@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Calendar, CheckSquare, Megaphone, UserRound } from 'lucide-react'
+import { FileText, Landmark, Receipt, TrendingUp } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getMyMemberProfile, updateMyMemberProfile } from '@/api/members'
@@ -109,7 +109,7 @@ export function MemberHomePage() {
     <div className="space-y-6">
       <PageHeader
         title={`Welcome, ${user?.full_name?.split(' ')[0] || 'Member'}`}
-        description={`${family?.name || 'Family'} · Your personal information`}
+        description={`${family?.name || 'Family'} · Enter your data · Admin can view all`}
         actions={
           editing ? (
             <>
@@ -128,10 +128,10 @@ export function MemberHomePage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: 'My tasks', to: '/app/tasks', icon: CheckSquare },
-          { label: 'Events', to: '/app/events', icon: Calendar },
-          { label: 'Announcements', to: '/app/announcements', icon: Megaphone },
-          { label: 'Account settings', to: '/app/settings', icon: UserRound },
+          { label: 'Enter income', to: '/app/finances/income', icon: TrendingUp },
+          { label: 'Enter expenses', to: '/app/finances/expenses', icon: Receipt },
+          { label: 'My contributions', to: '/app/finances/contributions', icon: Landmark },
+          { label: 'My documents', to: '/app/documents', icon: FileText },
         ].map((item) => {
           const Icon = item.icon
           return (

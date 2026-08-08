@@ -20,10 +20,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useFamilyId } from '@/hooks/useFamilyId'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { formatDate, getErrorMessage } from '@/lib/utils'
 
 export function DocumentsPage() {
   const familyId = useFamilyId()
+  const isAdmin = useIsAdmin()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')

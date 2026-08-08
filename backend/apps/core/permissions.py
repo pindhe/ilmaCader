@@ -97,3 +97,17 @@ class ReadOnlyOrFamilyAdmin(BasePermission):
         if request.method in SAFE_METHODS:
             return user_has_min_role(request.user, family_id, "member")
         return user_has_min_role(request.user, family_id, "admin")
+
+
+class IsFamilyContributor(BasePermission):
+    """Family members and admins can read/write (object scoping done in views)."""
+
+    def has_permission(self, request, view):
+        family_id = (
+            view.kwargs.get("family_id")
+            or request.query_params.get("family")
+            or request.data.get("family")
+        )
+        if not family_id:
+            return request.user.is_authenticated
+        return user_has_min_role(request.user, family_id, "member")
