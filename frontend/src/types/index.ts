@@ -54,6 +54,40 @@ export interface FamilyMembership {
   updated_at?: string
 }
 
+export interface MemberChildInfo {
+  name: string
+  date_of_birth?: string
+  gender?: string
+}
+
+export interface MemberProfileSteps {
+  education?: {
+    level?: string
+    institution?: string
+    field_of_study?: string
+    graduation_year?: string
+    notes?: string
+  }
+  health?: {
+    allergies?: string
+    conditions?: string
+    medications?: string
+    emergency_phone?: string
+  }
+  marriage?: {
+    has_spouse?: boolean | null
+    spouse_name?: string
+    marriage_date?: string
+    marriage_place?: string
+    notes?: string
+  }
+  children?: {
+    has_children?: boolean | null
+    items?: MemberChildInfo[]
+  }
+  last_completed_step?: number
+}
+
 export interface FamilyMember {
   id: string
   family: string
@@ -73,6 +107,7 @@ export interface FamilyMember {
   blood_type?: string
   emergency_contact?: string
   biography?: string
+  profile_steps?: MemberProfileSteps | null
   joined_date?: string | null
   family_role?: string
   is_archived?: boolean
@@ -254,10 +289,14 @@ export interface DocumentItem {
   title: string
   category?: string
   file?: string
+  file_url?: string | null
   member?: string | null
+  member_name?: string | null
   expiration_date?: string | null
   notes?: string
   status?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface TaskItem {

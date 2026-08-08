@@ -13,6 +13,16 @@ export async function createDocument(formData: FormData) {
   return unwrapData<DocumentItem>(data)
 }
 
-export async function deleteDocument(id: string) {
-  await api.delete(`/documents/${id}/`)
+export async function updateDocument(id: string, formData: FormData) {
+  const { data } = await api.patch(`/documents/${id}/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    params: formData.get('family') ? { family: String(formData.get('family')) } : undefined,
+  })
+  return unwrapData<DocumentItem>(data)
+}
+
+export async function deleteDocument(id: string, familyId?: string) {
+  await api.delete(`/documents/${id}/`, {
+    params: familyId ? { family: familyId } : undefined,
+  })
 }

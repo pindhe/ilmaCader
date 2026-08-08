@@ -1,8 +1,8 @@
 import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
-import { MemberHomePage } from '@/pages/members/MemberHomePage'
+import { MemberPortalHome } from '@/pages/members/MemberPortalHome'
 
 export function RoleHomePage() {
   const isAdmin = useIsAdmin()
-  return isAdmin ? <DashboardPage /> : <MemberHomePage />
+  return isAdmin ? <DashboardPage /> : <MemberPortalHome />
 }

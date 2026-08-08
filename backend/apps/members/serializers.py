@@ -39,6 +39,7 @@ class FamilyMemberSerializer(serializers.ModelSerializer):
             "blood_type",
             "emergency_contact",
             "biography",
+            "profile_steps",
             "joined_date",
             "family_role",
             "is_archived",

@@ -120,6 +120,10 @@ class DocumentViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.Model
 
     def destroy(self, request, *args, **kwargs):
         document = self.get_object()
-        if not user_has_min_role(request.user, document.family_id, "family_admin"):
+        family_id = document.family_id
+        member = get_user_member(request.user, family_id)
+        is_admin = user_has_min_role(request.user, family_id, "admin")
+        is_owner = bool(member and document.member_id == member.id)
+        if not (is_admin or is_owner):
             return api_response(False, "Permission denied.", status_code=status.HTTP_403_FORBIDDEN)
         return super().destroy(request, *args, **kwargs)

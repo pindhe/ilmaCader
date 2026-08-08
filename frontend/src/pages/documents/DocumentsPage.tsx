@@ -66,8 +66,12 @@ export function DocumentsPage() {
   return (
     <div>
       <PageHeader
-        title="Documents"
-        description="Secure vault for certificates, IDs, and family files"
+        title={isAdmin ? 'Documents' : 'My Documents'}
+        description={
+          isAdmin
+            ? 'All family documents (full admin view)'
+            : 'Upload your documents — admin can see them'
+        }
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

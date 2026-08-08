@@ -58,6 +58,8 @@ class FamilyMember(TimeStampedModel, SoftDeleteModel):
     blood_type = models.CharField(max_length=10, blank=True)
     emergency_contact = models.CharField(max_length=255, blank=True)
     biography = models.TextField(blank=True)
+    # Wizard data: education, health, marriage, children (steps 2–3, 5–6)
+    profile_steps = models.JSONField(default=dict, blank=True)
     joined_date = models.DateField(null=True, blank=True)
     family_role = models.CharField(
         max_length=30, choices=FamilyRole.choices, default=FamilyRole.OTHER

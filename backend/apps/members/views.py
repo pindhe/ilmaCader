@@ -48,6 +48,7 @@ class MyMemberProfileView(APIView):
         "blood_type",
         "emergency_contact",
         "biography",
+        "profile_steps",
         "date_of_birth",
         "gender",
         "profile_photo",

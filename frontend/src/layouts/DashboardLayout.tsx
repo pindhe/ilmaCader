@@ -66,29 +66,10 @@ const ADMIN_NAV = [
   { to: '/app/settings', label: 'Settings', icon: Settings },
 ]
 
-const MEMBER_NAV = [
-  { to: '/app', label: 'My Information', icon: LayoutDashboard, end: true },
-  { to: '/app/finances/income', label: 'My Income', icon: TrendingUp },
-  { to: '/app/finances/expenses', label: 'My Expenses', icon: Receipt },
-  { to: '/app/finances/contributions', label: 'My Contributions', icon: Landmark },
-  { to: '/app/documents', label: 'My Documents', icon: FileText },
-  { to: '/app/tasks', label: 'My Tasks', icon: FolderKanban },
-  { to: '/app/events', label: 'Events', icon: Calendar },
-  { to: '/app/announcements', label: 'Announcements', icon: Megaphone },
-  { to: '/app/settings', label: 'Settings', icon: Settings },
-]
-
-function SidebarNav({
-  onNavigate,
-  isAdmin,
-}: {
-  onNavigate?: () => void
-  isAdmin: boolean
-}) {
-  const items = isAdmin ? ADMIN_NAV : MEMBER_NAV
+function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-      {items.map((item) => {
+      {ADMIN_NAV.map((item) => {
         const Icon = item.icon
         return (
           <NavLink
@@ -165,7 +146,7 @@ export function DashboardLayout() {
           />
           <p className="mt-2 truncate text-xs text-white/60">{family?.name || 'No family selected'}</p>
         </div>
-        <SidebarNav isAdmin={isAdmin} />
+        <SidebarNav />
       </aside>
 
       {mobileOpen ? (
@@ -183,7 +164,7 @@ export function DashboardLayout() {
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <SidebarNav isAdmin={isAdmin} onNavigate={() => setMobileOpen(false)} />
+            <SidebarNav onNavigate={() => setMobileOpen(false)} />
           </aside>
         </div>
       ) : null}

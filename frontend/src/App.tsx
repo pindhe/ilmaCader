@@ -5,12 +5,12 @@ import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
 import { AdminRoute } from '@/components/auth/AdminRoute'
 import { ProtectedRoute, SuperAdminRoute } from '@/components/auth/ProtectedRoute'
-import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { LandingLayout } from '@/layouts/LandingLayout'
+import { RoleLayout } from '@/layouts/RoleLayout'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
-import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { ActivityLogsPage } from '@/pages/activity/ActivityLogsPage'
+import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { RoleHomePage } from '@/pages/dashboard/RoleHomePage'
 import { DocumentsPage } from '@/pages/documents/DocumentsPage'
 import { ForbiddenPage } from '@/pages/errors/ForbiddenPage'
@@ -30,6 +30,7 @@ import { SavingsPage } from '@/pages/finance/SavingsPage'
 import { LandingPage } from '@/pages/landing/LandingPage'
 import { FamilyTreePage } from '@/pages/members/FamilyTreePage'
 import { MemberDetailPage } from '@/pages/members/MemberDetailPage'
+import { MemberHomePage } from '@/pages/members/MemberHomePage'
 import { MembersPage } from '@/pages/members/MembersPage'
 import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
@@ -74,29 +75,29 @@ export default function App() {
               </Route>
 
               <Route path="app" element={<ProtectedRoute />}>
-                <Route element={<DashboardLayout />}>
+                <Route element={<RoleLayout />}>
                   <Route index element={<RoleHomePage />} />
-                  {/* Members enter their own data; admin sees all */}
-                  <Route path="finances/income" element={<IncomePage />} />
-                  <Route path="finances/expenses" element={<ExpensesPage />} />
-                  <Route path="finances/contributions" element={<ContributionsPage />} />
+                  <Route path="my-info" element={<MemberHomePage />} />
                   <Route path="documents" element={<DocumentsPage />} />
-                  <Route path="tasks" element={<TasksPage />} />
                   <Route path="events" element={<EventsPage />} />
-                  <Route path="announcements" element={<AnnouncementsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
 
-                  {/* Admin-only management */}
+                  {/* Admin-only */}
                   <Route element={<AdminRoute />}>
                     <Route path="members" element={<MembersPage />} />
                     <Route path="members/:id" element={<MemberDetailPage />} />
                     <Route path="family-tree" element={<FamilyTreePage />} />
                     <Route path="finances" element={<FinancesHubPage />} />
+                    <Route path="finances/income" element={<IncomePage />} />
+                    <Route path="finances/expenses" element={<ExpensesPage />} />
+                    <Route path="finances/contributions" element={<ContributionsPage />} />
                     <Route path="finances/savings" element={<SavingsPage />} />
                     <Route path="finances/budget" element={<BudgetPage />} />
                     <Route path="finances/assets" element={<AssetsPage />} />
                     <Route path="finances/debts" element={<DebtsPage />} />
                     <Route path="finances/goals" element={<GoalsPage />} />
+                    <Route path="tasks" element={<TasksPage />} />
+                    <Route path="announcements" element={<AnnouncementsPage />} />
                     <Route path="reports" element={<ReportsPage />} />
                     <Route path="activity" element={<ActivityLogsPage />} />
                     <Route path="family" element={<FamilyProfilePage />} />

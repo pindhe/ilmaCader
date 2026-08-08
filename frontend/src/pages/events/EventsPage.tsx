@@ -20,10 +20,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useFamilyId } from '@/hooks/useFamilyId'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { formatDate, getErrorMessage } from '@/lib/utils'
 
 export function EventsPage() {
   const familyId = useFamilyId()
+  const isAdmin = useIsAdmin()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({
@@ -60,51 +62,81 @@ export function EventsPage() {
         title="Events"
         description="Family gatherings, milestones, and meetings"
         actions={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4" /> Add event</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Create event</DialogTitle></DialogHeader>
-              <form
-                className="space-y-3"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  mutation.mutate()
-                }}
-              >
-                <div className="space-y-2">
-                  <Label>Name</Label>
-                  <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+          isAdmin ? (
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4" /> Add event
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create event</DialogTitle>
+                </DialogHeader>
+                <form
+                  className="space-y-3"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    mutation.mutate()
+                  }}
+                >
                   <div className="space-y-2">
-                    <Label>Date</Label>
-                    <Input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                    <Label>Name</Label>
+                    <Input
+                      required
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Date</Label>
+                      <Input
+                        type="date"
+                        required
+                        value={form.date}
+                        onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Time</Label>
+                      <Input
+                        type="time"
+                        value={form.time}
+                        onChange={(e) => setForm({ ...form, time: e.target.value })}
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Time</Label>
-                    <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+                    <Label>Location</Label>
+                    <Input
+                      value={form.location}
+                      onChange={(e) => setForm({ ...form, location: e.target.value })}
+                    />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Location</Label>
-                  <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <Input value={form.event_type} onChange={(e) => setForm({ ...form, event_type: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={mutation.isPending}>Save event</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <div className="space-y-2">
+                    <Label>Type</Label>
+                    <Input
+                      value={form.event_type}
+                      onChange={(e) => setForm({ ...form, event_type: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" disabled={mutation.isPending}>
+                      Save event
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          ) : undefined
         }
       />
 
@@ -113,11 +145,15 @@ export function EventsPage() {
       ) : query.isError ? (
         <EmptyState
           title="No events available"
-          description="Events API is not ready yet, or returned an error. You can still try adding one."
-          action={<Button onClick={() => setOpen(true)}>Add event</Button>}
+          description="Events API is not ready yet, or returned an error."
+          action={isAdmin ? <Button onClick={() => setOpen(true)}>Add event</Button> : undefined}
         />
       ) : (query.data?.length ?? 0) === 0 ? (
-        <EmptyState title="No events yet" description="Schedule your first family event." action={<Button onClick={() => setOpen(true)}>Add event</Button>} />
+        <EmptyState
+          title="No events yet"
+          description="No family events scheduled."
+          action={isAdmin ? <Button onClick={() => setOpen(true)}>Add event</Button> : undefined}
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {query.data?.map((event) => (
@@ -127,15 +163,22 @@ export function EventsPage() {
                   <h3 className="font-semibold">{event.name}</h3>
                   <Badge variant="muted">{event.event_type || 'event'}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">{formatDate(event.date)}{event.time ? ` · ${event.time}` : ''}</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatDate(event.date)}
+                  {event.time ? ` · ${event.time}` : ''}
+                </p>
                 <p className="text-sm">{event.location || 'No location'}</p>
-                <p className="text-sm text-muted-foreground">{event.description || 'No description'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {event.description || 'No description'}
+                </p>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
-      {query.isError ? <ErrorState message={getErrorMessage(query.error)} onRetry={() => query.refetch()} /> : null}
+      {query.isError ? (
+        <ErrorState message={getErrorMessage(query.error)} onRetry={() => query.refetch()} />
+      ) : null}
     </div>
   )
 }
