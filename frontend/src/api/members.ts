@@ -11,7 +11,14 @@ export async function getMember(id: string) {
   return unwrapData<FamilyMember>(data)
 }
 
-export async function createMember(payload: Partial<FamilyMember> & { family: string }) {
+export async function createMember(
+  payload: Partial<FamilyMember> & {
+    family: string
+    password?: string
+    access_role?: 'admin' | 'member'
+    create_login?: boolean
+  },
+) {
   const { data } = await api.post('/members/', payload)
   return unwrapData<FamilyMember>(data)
 }

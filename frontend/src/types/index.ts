@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'family_admin' | 'family_member' | 'viewer'
+export type UserRole = 'admin' | 'member'
 
 export interface User {
   id: string
@@ -14,6 +14,7 @@ export interface User {
   email_verified?: boolean
   is_suspended?: boolean
   two_factor_enabled?: boolean
+  is_superuser?: boolean
   date_joined?: string
   last_login?: string | null
 }
@@ -47,7 +48,7 @@ export interface FamilyMembership {
   family: string
   family_name?: string
   user: User
-  role: UserRole | 'family_admin' | 'family_member' | 'viewer'
+  role: UserRole
   is_active: boolean
   created_at?: string
   updated_at?: string

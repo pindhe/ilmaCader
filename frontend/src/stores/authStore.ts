@@ -14,7 +14,6 @@ interface AuthState {
   setUser: (user: User | null) => void
   setFamily: (family: Family | null) => void
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>
-  register: (payload: authApi.RegisterPayload) => Promise<void>
   logout: () => Promise<void>
   hydrate: () => Promise<void>
   refreshFamilies: () => Promise<void>
@@ -47,15 +46,6 @@ export const useAuthStore = create<AuthState>()(
             family: families[0] ?? null,
             isAuthenticated: true,
           })
-        } finally {
-          set({ isLoading: false })
-        }
-      },
-
-      register: async (payload) => {
-        set({ isLoading: true })
-        try {
-          await authApi.register(payload)
         } finally {
           set({ isLoading: false })
         }

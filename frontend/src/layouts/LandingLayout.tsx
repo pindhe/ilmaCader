@@ -19,7 +19,7 @@ export function LandingLayout() {
               <Link to="/">Sign in</Link>
             </Button>
             <Button asChild variant="accent">
-              <Link to="/register">Get started</Link>
+              <Link to="/">Sign in</Link>
             </Button>
           </div>
         </div>

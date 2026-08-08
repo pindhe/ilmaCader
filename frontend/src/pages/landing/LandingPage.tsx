@@ -43,7 +43,7 @@ export function LandingPage() {
             className="mt-8 flex flex-wrap gap-3"
           >
             <Button asChild size="lg" variant="accent">
-              <Link to="/register">Get Started</Link>
+              <Link to="/">Sign in</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white">
               <Link to="/">Login</Link>
@@ -135,7 +135,7 @@ export function LandingPage() {
               Start organizing profiles, budgets, and milestones in a single trusted place.
             </p>
             <Button asChild className="mt-6" variant="accent">
-              <Link to="/register">Get started free</Link>
+              <Link to="/">Sign in</Link>
             </Button>
           </div>
         </div>

@@ -25,7 +25,7 @@ export function ProtectedRoute() {
 
 export function SuperAdminRoute() {
   const user = useAuthStore((s) => s.user)
-  if (user?.role !== 'super_admin') {
+  if (!user?.is_superuser) {
     return <Navigate to="/forbidden" replace />
   }
   return <Outlet />

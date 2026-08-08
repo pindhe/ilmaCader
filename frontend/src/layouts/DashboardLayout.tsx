@@ -275,7 +275,7 @@ export function DashboardLayout() {
                 {families.length > 0 ? <DropdownMenuSeparator /> : null}
                 <DropdownMenuItem onClick={() => navigate('/app/family')}>Family profile</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/app/settings')}>Settings</DropdownMenuItem>
-                {user?.role === 'super_admin' ? (
+                {user?.is_superuser ? (
                   <DropdownMenuItem onClick={() => navigate('/app/admin')}>
                     <Shield className="mr-2 h-4 w-4" /> Admin
                   </DropdownMenuItem>

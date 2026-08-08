@@ -7,15 +7,6 @@ export interface LoginPayload {
   remember_me?: boolean
 }
 
-export interface RegisterPayload {
-  full_name: string
-  email: string
-  phone?: string
-  password: string
-  confirm_password: string
-  family_name: string
-}
-
 export async function login(payload: LoginPayload) {
   const { data } = await api.post<ApiResponse<{ user: User; tokens: AuthTokens }>>(
     '/auth/login/',
@@ -24,11 +15,6 @@ export async function login(payload: LoginPayload) {
   const result = unwrapData<{ user: User; tokens: AuthTokens }>(data)
   setTokens(result.tokens.access, result.tokens.refresh)
   return result
-}
-
-export async function register(payload: RegisterPayload) {
-  const { data } = await api.post('/auth/register/', payload)
-  return unwrapData(data)
 }
 
 export async function logout() {

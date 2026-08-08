@@ -61,9 +61,13 @@ App: http://127.0.0.1:5173/
 
 | Email | Password | Role |
 |-------|----------|------|
-| `admin@familydatacenter.local` | `Admin@12345` | Super Admin |
-| `hassan@demo.local` | `Demo@12345` | Family Admin (Hassan Family) |
-| `amina@demo.local` | `Demo@12345` | Family Member |
+| `admin@familydatacenter.local` | `Admin@12345` | Admin (platform) |
+| `hassan@demo.local` | `Demo@12345` | Admin (Hassan Family) |
+| `amina@demo.local` | `Demo@12345` | Member |
+
+There is **no public registration**. Only an **admin** can create members (with login).
+
+Roles: `admin` · `member`
 
 Demo family ID example: `FAM-2026-00001`
 

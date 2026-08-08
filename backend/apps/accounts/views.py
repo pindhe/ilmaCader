@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
-from django.db import transaction
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -18,11 +17,9 @@ from apps.accounts.serializers import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     ProfileUpdateSerializer,
-    RegisterSerializer,
     UserSerializer,
 )
 from apps.accounts.tokens import create_email_verification_token, create_password_reset_token
-from apps.families.models import Family, FamilyMembership
 
 
 def api_response(success, message, data=None, status_code=status.HTTP_200_OK, errors=None):
