@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
+import { AdminRoute } from '@/components/auth/AdminRoute'
 import { ProtectedRoute, SuperAdminRoute } from '@/components/auth/ProtectedRoute'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
@@ -13,7 +14,7 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { ActivityLogsPage } from '@/pages/activity/ActivityLogsPage'
-import { DashboardPage } from '@/pages/dashboard/DashboardPage'
+import { RoleHomePage } from '@/pages/dashboard/RoleHomePage'
 import { DocumentsPage } from '@/pages/documents/DocumentsPage'
 import { ForbiddenPage } from '@/pages/errors/ForbiddenPage'
 import { NotFoundPage } from '@/pages/errors/NotFoundPage'
@@ -79,27 +80,31 @@ export default function App() {
 
               <Route path="app" element={<ProtectedRoute />}>
                 <Route element={<DashboardLayout />}>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="members" element={<MembersPage />} />
-                  <Route path="members/:id" element={<MemberDetailPage />} />
-                  <Route path="family-tree" element={<FamilyTreePage />} />
-                  <Route path="finances" element={<FinancesHubPage />} />
-                  <Route path="finances/income" element={<IncomePage />} />
-                  <Route path="finances/expenses" element={<ExpensesPage />} />
-                  <Route path="finances/contributions" element={<ContributionsPage />} />
-                  <Route path="finances/savings" element={<SavingsPage />} />
-                  <Route path="finances/budget" element={<BudgetPage />} />
-                  <Route path="finances/assets" element={<AssetsPage />} />
-                  <Route path="finances/debts" element={<DebtsPage />} />
-                  <Route path="finances/goals" element={<GoalsPage />} />
-                  <Route path="events" element={<EventsPage />} />
-                  <Route path="documents" element={<DocumentsPage />} />
+                  <Route index element={<RoleHomePage />} />
                   <Route path="tasks" element={<TasksPage />} />
+                  <Route path="events" element={<EventsPage />} />
                   <Route path="announcements" element={<AnnouncementsPage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="activity" element={<ActivityLogsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
-                  <Route path="family" element={<FamilyProfilePage />} />
+
+                  <Route element={<AdminRoute />}>
+                    <Route path="members" element={<MembersPage />} />
+                    <Route path="members/:id" element={<MemberDetailPage />} />
+                    <Route path="family-tree" element={<FamilyTreePage />} />
+                    <Route path="finances" element={<FinancesHubPage />} />
+                    <Route path="finances/income" element={<IncomePage />} />
+                    <Route path="finances/expenses" element={<ExpensesPage />} />
+                    <Route path="finances/contributions" element={<ContributionsPage />} />
+                    <Route path="finances/savings" element={<SavingsPage />} />
+                    <Route path="finances/budget" element={<BudgetPage />} />
+                    <Route path="finances/assets" element={<AssetsPage />} />
+                    <Route path="finances/debts" element={<DebtsPage />} />
+                    <Route path="finances/goals" element={<GoalsPage />} />
+                    <Route path="documents" element={<DocumentsPage />} />
+                    <Route path="reports" element={<ReportsPage />} />
+                    <Route path="activity" element={<ActivityLogsPage />} />
+                    <Route path="family" element={<FamilyProfilePage />} />
+                  </Route>
+
                   <Route element={<SuperAdminRoute />}>
                     <Route path="admin" element={<AdminDashboardPage />} />
                   </Route>

@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useFamilyId } from '@/hooks/useFamilyId'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { cn, formatDate, getErrorMessage } from '@/lib/utils'
 import type { TaskItem } from '@/types'
 
@@ -33,6 +34,7 @@ const COLUMNS: Array<{ key: TaskItem['status']; label: string }> = [
 
 export function TasksPage() {
   const familyId = useFamilyId()
+  const isAdmin = useIsAdmin()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({
@@ -77,9 +79,14 @@ export function TasksPage() {
   return (
     <div>
       <PageHeader
-        title="Tasks"
-        description="Kanban and list views for family to-dos"
+        title={isAdmin ? 'Tasks' : 'My Tasks'}
+        description={
+          isAdmin
+            ? 'Kanban and list views for family to-dos'
+            : 'Tasks assigned to you'
+        }
         actions={
+          isAdmin ? (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4" /> Add task</Button>
@@ -117,6 +124,7 @@ export function TasksPage() {
               </form>
             </DialogContent>
           </Dialog>
+          ) : null
         }
       />
 
@@ -124,11 +132,19 @@ export function TasksPage() {
         <LoadingState />
       ) : query.isError ? (
         <>
-          <EmptyState title="Tasks unavailable" description="Tasks API is not ready yet." action={<Button onClick={() => setOpen(true)}>Add task</Button>} />
+          <EmptyState title="Tasks unavailable" description="Could not load tasks." />
           <div className="mt-4"><ErrorState message={getErrorMessage(query.error)} onRetry={() => query.refetch()} /></div>
         </>
       ) : tasks.length === 0 ? (
-        <EmptyState title="No tasks yet" description="Create the first shared task." action={<Button onClick={() => setOpen(true)}>Add task</Button>} />
+        <EmptyState
+          title="No tasks yet"
+          description={isAdmin ? 'Create the first shared task.' : 'No tasks are assigned to you yet.'}
+          action={
+            isAdmin ? (
+              <Button onClick={() => setOpen(true)}>Add task</Button>
+            ) : undefined
+          }
+        />
       ) : (
         <Tabs defaultValue="kanban">
           <TabsList>

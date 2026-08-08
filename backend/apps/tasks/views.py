@@ -19,6 +19,14 @@ class TaskViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.ModelView
     ordering_fields = ["due_date", "priority", "status", "created_at", "title"]
     ordering = ["status", "due_date", "-priority"]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        family_id = self.get_family_id()
+        if family_id and not user_has_min_role(user, family_id, "admin"):
+            return qs.filter(assigned_member__user=user)
+        return qs
+
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)

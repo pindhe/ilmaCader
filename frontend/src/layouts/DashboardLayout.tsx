@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useTheme } from 'next-themes'
 import {
   Activity,
@@ -27,6 +27,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 import { GlobalSearch } from '@/components/search/GlobalSearch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -40,11 +41,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { listNotifications } from '@/api/notifications'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
 import type { NotificationItem } from '@/types'
 
-const NAV_ITEMS = [
+const ADMIN_NAV = [
   { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/app/members', label: 'Family Members', icon: Users },
   { to: '/app/family-tree', label: 'Family Tree', icon: GitBranch },
@@ -64,10 +66,25 @@ const NAV_ITEMS = [
   { to: '/app/settings', label: 'Settings', icon: Settings },
 ]
 
-function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+const MEMBER_NAV = [
+  { to: '/app', label: 'My Information', icon: LayoutDashboard, end: true },
+  { to: '/app/tasks', label: 'My Tasks', icon: FolderKanban },
+  { to: '/app/events', label: 'Events', icon: Calendar },
+  { to: '/app/announcements', label: 'Announcements', icon: Megaphone },
+  { to: '/app/settings', label: 'Settings', icon: Settings },
+]
+
+function SidebarNav({
+  onNavigate,
+  isAdmin,
+}: {
+  onNavigate?: () => void
+  isAdmin: boolean
+}) {
+  const items = isAdmin ? ADMIN_NAV : MEMBER_NAV
   return (
     <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const Icon = item.icon
         return (
           <NavLink
@@ -104,6 +121,7 @@ export function DashboardLayout() {
   const families = useAuthStore((s) => s.families)
   const setFamily = useAuthStore((s) => s.setFamily)
   const logout = useAuthStore((s) => s.logout)
+  const isAdmin = useIsAdmin()
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -135,12 +153,15 @@ export function DashboardLayout() {
     <div className="flex min-h-screen bg-background">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:flex">
         <div className="border-b border-sidebar-border px-5 py-5">
-          <Link to="/app" className="text-lg font-bold tracking-tight text-white">
-            Family Data Center
-          </Link>
-          <p className="mt-1 truncate text-xs text-white/60">{family?.name || 'No family selected'}</p>
+          <BrandLogo
+            to="/app"
+            size="md"
+            textClassName="text-base text-white"
+            className="items-center"
+          />
+          <p className="mt-2 truncate text-xs text-white/60">{family?.name || 'No family selected'}</p>
         </div>
-        <SidebarNav />
+        <SidebarNav isAdmin={isAdmin} />
       </aside>
 
       {mobileOpen ? (
@@ -153,12 +174,12 @@ export function DashboardLayout() {
           />
           <aside className="relative flex h-full w-72 flex-col bg-sidebar text-sidebar-foreground shadow-xl">
             <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-4">
-              <span className="font-bold text-white">Family Data Center</span>
+              <BrandLogo to="/app" size="sm" textClassName="text-sm text-white" />
               <Button variant="ghost" size="icon" className="text-white" onClick={() => setMobileOpen(false)}>
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <SidebarNav onNavigate={() => setMobileOpen(false)} />
+            <SidebarNav isAdmin={isAdmin} onNavigate={() => setMobileOpen(false)} />
           </aside>
         </div>
       ) : null}
@@ -177,19 +198,26 @@ export function DashboardLayout() {
               </p>
             </div>
 
-            <Button
-              variant="outline"
-              className="hidden max-w-xs flex-1 justify-start gap-2 text-muted-foreground md:flex"
-              onClick={() => setSearchOpen(true)}
-            >
-              <Search className="h-4 w-4" />
-              <span className="flex-1 text-left text-sm">Search…</span>
-              <kbd className="rounded border border-border px-1.5 py-0.5 text-[10px]">Ctrl+K</kbd>
-            </Button>
-
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSearchOpen(true)}>
-              <Search className="h-5 w-5" />
-            </Button>
+            {isAdmin ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="hidden max-w-xs flex-1 justify-start gap-2 text-muted-foreground md:flex"
+                  onClick={() => setSearchOpen(true)}
+                >
+                  <Search className="h-4 w-4" />
+                  <span className="flex-1 text-left text-sm">Search…</span>
+                  <kbd className="rounded border border-border px-1.5 py-0.5 text-[10px]">Ctrl+K</kbd>
+                </Button>
+                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSearchOpen(true)}>
+                  <Search className="h-5 w-5" />
+                </Button>
+              </>
+            ) : (
+              <Badge variant="muted" className="hidden sm:inline-flex">
+                Member
+              </Badge>
+            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -273,7 +301,9 @@ export function DashboardLayout() {
                   </DropdownMenuItem>
                 ))}
                 {families.length > 0 ? <DropdownMenuSeparator /> : null}
-                <DropdownMenuItem onClick={() => navigate('/app/family')}>Family profile</DropdownMenuItem>
+                {isAdmin ? (
+                  <DropdownMenuItem onClick={() => navigate('/app/family')}>Family profile</DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem onClick={() => navigate('/app/settings')}>Settings</DropdownMenuItem>
                 {user?.is_superuser ? (
                   <DropdownMenuItem onClick={() => navigate('/app/admin')}>
@@ -299,7 +329,7 @@ export function DashboardLayout() {
         </main>
       </div>
 
-      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+      {isAdmin ? <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} /> : null}
     </div>
   )
 }

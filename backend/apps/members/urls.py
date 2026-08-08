@@ -1,7 +1,12 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from apps.members.views import FamilyMemberViewSet, FamilyTreeView, RelationshipViewSet
+from apps.members.views import (
+    FamilyMemberViewSet,
+    FamilyTreeView,
+    MyMemberProfileView,
+    RelationshipViewSet,
+)
 
 app_name = "members"
 
@@ -12,6 +17,7 @@ relationship_router = DefaultRouter()
 relationship_router.register(r"", RelationshipViewSet, basename="relationship")
 
 urlpatterns = [
+    path("me/", MyMemberProfileView.as_view(), name="my-member-profile"),
     path("tree/", FamilyTreeView.as_view(), name="family-tree"),
     path("relationships/", include(relationship_router.urls)),
     path("", include(member_router.urls)),

@@ -6,6 +6,23 @@ export async function listMembers(familyId: string) {
   return unwrapList<FamilyMember>(data)
 }
 
+export async function getMyMemberProfile(familyId?: string) {
+  const { data } = await api.get('/members/me/', {
+    params: familyId ? { family: familyId } : undefined,
+  })
+  return unwrapData<FamilyMember>(data)
+}
+
+export async function updateMyMemberProfile(
+  payload: Partial<FamilyMember>,
+  familyId?: string,
+) {
+  const { data } = await api.patch('/members/me/', payload, {
+    params: familyId ? { family: familyId } : undefined,
+  })
+  return unwrapData<FamilyMember>(data)
+}
+
 export async function getMember(id: string) {
   const { data } = await api.get(`/members/${id}/`)
   return unwrapData<FamilyMember>(data)

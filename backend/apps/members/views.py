@@ -6,7 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.mixins import FamilyScopedQuerysetMixin, SoftDeleteMixin
-from apps.core.permissions import ReadOnlyOrFamilyAdmin, user_has_min_role
+from apps.core.permissions import (
+    ReadOnlyOrFamilyAdmin,
+    normalize_role,
+    user_has_min_role,
+)
 from apps.core.utils import log_activity
 from apps.families.models import Family
 from apps.members.models import FamilyMember, Relationship
@@ -20,6 +24,86 @@ def api_response(success, message, data=None, status_code=status.HTTP_200_OK, er
     return Response(payload, status=status_code)
 
 
+def get_own_member(user, family_id=None):
+    qs = FamilyMember.objects.filter(user=user, is_deleted=False, is_archived=False)
+    if family_id:
+        qs = qs.filter(family_id=family_id)
+    return qs.select_related("family", "user").first()
+
+
+class MyMemberProfileView(APIView):
+    """Members can view and update only their own family profile."""
+
+    permission_classes = [IsAuthenticated]
+
+    MEMBER_EDITABLE = {
+        "full_name",
+        "phone",
+        "email",
+        "occupation",
+        "education",
+        "city",
+        "country",
+        "marital_status",
+        "blood_type",
+        "emergency_contact",
+        "biography",
+        "date_of_birth",
+        "gender",
+        "profile_photo",
+    }
+
+    def get(self, request):
+        family_id = request.query_params.get("family")
+        member = get_own_member(request.user, family_id)
+        if not member:
+            return api_response(
+                False,
+                "No member profile linked to this account.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        return api_response(
+            True,
+            "Your profile.",
+            FamilyMemberSerializer(member, context={"request": request}).data,
+        )
+
+    def patch(self, request):
+        family_id = request.query_params.get("family") or request.data.get("family")
+        member = get_own_member(request.user, family_id)
+        if not member:
+            return api_response(
+                False,
+                "No member profile linked to this account.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        payload = {k: v for k, v in request.data.items() if k in self.MEMBER_EDITABLE}
+        serializer = FamilyMemberSerializer(
+            member, data=payload, partial=True, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        member = serializer.save()
+        if "full_name" in payload or "phone" in payload:
+            user = request.user
+            if "full_name" in payload:
+                user.full_name = payload["full_name"]
+            if "phone" in payload:
+                user.phone = payload["phone"]
+            user.save(update_fields=["full_name", "phone"] if "phone" in payload else ["full_name"])
+        log_activity(
+            request,
+            "Updated own member profile",
+            module="members",
+            family=member.family,
+            details={"id": str(member.id)},
+        )
+        return api_response(
+            True,
+            "Profile updated.",
+            FamilyMemberSerializer(member, context={"request": request}).data,
+        )
+
+
 class FamilyMemberViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.ModelViewSet):
     queryset = FamilyMember.objects.select_related("family", "user")
     serializer_class = FamilyMemberSerializer
@@ -29,6 +113,17 @@ class FamilyMemberViewSet(FamilyScopedQuerysetMixin, SoftDeleteMixin, viewsets.M
     search_fields = ["full_name", "email", "phone", "occupation", "city"]
     ordering_fields = ["full_name", "joined_date", "created_at", "family_role"]
     ordering = ["full_name"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        family_id = self.get_family_id()
+        # Members only see their own record
+        if family_id and not user_has_min_role(user, family_id, "admin"):
+            return qs.filter(user=user)
+        if normalize_role(getattr(user, "role", None)) == "member" and not user.is_superuser:
+            return qs.filter(user=user)
+        return qs
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
